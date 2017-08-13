@@ -13,7 +13,7 @@
 class AParkingSlot;
 
 /**
- * 
+ * ParkingPassthrough
  */
 UCLASS()
 class TELEKOM_SC360_API AParkingPassthrough : public ATrafficRoad
