@@ -12,12 +12,17 @@ struct FTrafficData
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		FVector	Location_DebugTime;
+		TArray<FVector>	Location_DebugTime;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float Time_DebugTime;
+		TArray<float> Time_DebugTime;
+	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
+		int DataCount_DebugTime;
+
 public:
 
 	FTrafficData();
+
+	void AddDebugTimeData(FVector loc, float time);
 };
 
 // This class does not need to be modified.

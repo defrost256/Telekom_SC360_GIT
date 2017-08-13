@@ -3,6 +3,28 @@
 #include "TrafficProbe.h"
 
 
+FVector4 ATrafficProbe::FindLocationAndDistanceAlongSplineNearLocation(USplineComponent* spline, FVector loc, float precision)
+{
+	float l = spline->GetSplineLength();
+	float inc = l / 4;
+	float d = l / 2;
+	float targetKey = spline->FindInputKeyClosestToWorldLocation(loc);
+	while (FMath::Abs(inc) > precision)
+	{
+		float currentKey = spline->GetInputKeyAtDistanceAlongSpline(d);
+		if (currentKey < targetKey)
+		{
+			d += inc;
+		}
+		else if(currentKey > targetKey)
+		{
+			d -= inc;
+		}
+		inc /= 2;
+	}
+	return FVector4(spline->GetLocationAtSplineInputKey(targetKey, ESplineCoordinateSpace::World), d);
+}
+
 // Sets default values
 ATrafficProbe::ATrafficProbe()
 {
@@ -136,6 +158,7 @@ void ATrafficProbe::RunQueries()
 	FTrafficData newData;
 	UWorld* World = GetWorld();
 	ATrafficRoad* nearestRoad = GetNearestRoad();
+	FVector Me = GetActorLocation();
 	if (bDebugRoadTime)
 	{
 		TArray<UActorComponent*> splineComps;
@@ -151,11 +174,13 @@ void ATrafficProbe::RunQueries()
 		}
 		for (UActorComponent* splineComp : splineComps)
 		{
-			//TODO I'M SOOOO TIRED
-			return;
+			USplineComponent* spline = Cast<USplineComponent>(splineComp);
+			FVector4 locAndDist = FindLocationAndDistanceAlongSplineNearLocation(spline, Me);
+			newData.AddDebugTimeData(locAndDist, locAndDist.W);
 		}
-
 	}
+
+	currentData = newData;
 }
 
 void ATrafficProbe::UpdateDrawing()

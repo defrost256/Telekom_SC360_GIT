@@ -71,9 +71,17 @@ FTrafficDebugRenderSceneProxy::FTrafficDebugRenderSceneProxy(const UPrimitiveCom
 	Texts = InTexts;
 	
 	const UTrafficProbeRenderComponent* renderComp = Cast<const UTrafficProbeRenderComponent>(&InComponent);
+	
 	ActorOwner = InComponent.GetOwner();
-
-	//TODO Query init
+	DataSource = Cast<const ITrafficDataCollectorInterface>(DataSource);
+	if (!DataSource)
+	{
+		DataSource = Cast<const ITrafficDataCollectorInterface>(&InComponent);
+	}
+	if (Lines.Num() == 0 && Texts.Num() == 0 && DataSource)
+	{
+		CollectData();
+	}
 }
 
 FPrimitiveViewRelevance FTrafficDebugRenderSceneProxy::GetViewRelevance(const FSceneView * View) const
@@ -83,4 +91,8 @@ FPrimitiveViewRelevance FTrafficDebugRenderSceneProxy::GetViewRelevance(const FS
 	ret.bDynamicRelevance = true;
 	ret.bSeparateTranslucencyRelevance = ret.bNormalTranslucencyRelevance = IsShown(View);
 	return ret;
+}
+
+void FTrafficDebugRenderSceneProxy::CollectData()
+{
 }

@@ -39,7 +39,10 @@ public:
 
 
 	UPROPERTY(BlueprintReadWrite)
-		FTrafficData lastData;
+		FTrafficData currentData;
+
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Probing")
+		FVector4 FindLocationAndDistanceAlongSplineNearLocation(USplineComponent* spline, FVector loc, float precision = 0.0001);
 
 	// Sets default values for this actor's properties
 	ATrafficProbe();

@@ -8,6 +8,8 @@
 #include "Classes/Engine/Canvas.h"
 #include "GameFramework/Actor.h"
 
+#include "TrafficDataCollectorInterface.h"
+
 #include "TrafficProbeRenderComponent.generated.h"
 
 class TELEKOM_SC360_API FTrafficDebugRenderSceneProxy : public FDebugRenderSceneProxy
@@ -27,7 +29,9 @@ public:
 private:
 
 	AActor* ActorOwner;
+	const ITrafficDataCollectorInterface* DataSource;
 
+	void CollectData();
 };
 
 class FTrafficRenderingDebugDrawDelegateHelper : public FDebugDrawDelegateHelper
@@ -37,6 +41,8 @@ protected:
 
 private:
 	AActor* ActorOwner;
+	const ITrafficDataCollectorInterface* DataSource;
+
 };
 
 /**

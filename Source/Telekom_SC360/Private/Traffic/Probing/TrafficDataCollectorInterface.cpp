@@ -12,3 +12,10 @@ FTrafficData ITrafficDataCollectorInterface::GetTrafficData()
 FTrafficData::FTrafficData()
 {
 }
+
+void FTrafficData::AddDebugTimeData(FVector loc, float time)
+{
+	Location_DebugTime.Add(loc);
+	Time_DebugTime.Add(time);
+	DataCount_DebugTime++;
+}
