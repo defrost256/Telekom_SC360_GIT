@@ -1,4 +1,6 @@
 Binaries
+!Binaries/*/UE4Editor.modules
+!Binaries/*/UE4Editor-Telekom_SC360_GIT.dll
 DerivedDataCache
 Intermediate
 Saved
