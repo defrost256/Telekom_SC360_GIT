@@ -3,9 +3,9 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class Telekom_SC360EditorTarget : TargetRules
+public class Telekom_SC360_GITEditorTarget : TargetRules
 {
-	public Telekom_SC360EditorTarget(TargetInfo Target) : base(Target)
+	public Telekom_SC360_GITEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
         

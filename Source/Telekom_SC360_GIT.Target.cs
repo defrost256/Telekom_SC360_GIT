@@ -3,9 +3,9 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class Telekom_SC360Target : TargetRules
+public class Telekom_SC360_GITTarget : TargetRules
 {
-	public Telekom_SC360Target(TargetInfo Target) : base(Target)
+	public Telekom_SC360_GITTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
 
