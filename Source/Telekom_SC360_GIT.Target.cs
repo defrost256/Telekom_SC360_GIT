@@ -10,5 +10,9 @@ public class Telekom_SC360_GITTarget : TargetRules
 		Type = TargetType.Game;
 
 		ExtraModuleNames.AddRange( new string[] { "Telekom_SC360" } );
+		if (bBuildEditor)
+        	{
+           		ExtraModuleNames.AddRange( new string[] { "Telekom_SC360_Editor" });
+  		}
     }
 }

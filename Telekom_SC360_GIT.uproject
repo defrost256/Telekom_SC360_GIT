@@ -4,15 +4,20 @@
 	"Category": "",
 	"Description": "",
 	"Modules": [
-		{
-			"Name": "Telekom_SC360",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"Engine",
-				"CoreUObject"
-			]
-		}
+    {
+      "Name": "Telekom_SC360",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine",
+        "CoreUObject"
+      ]
+    },
+    {
+      "Name": "Telekom_SC360_Editor",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit"
+    }
 	],
 	"Plugins": [
 		{

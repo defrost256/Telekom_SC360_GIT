@@ -9,6 +9,6 @@ public class Telekom_SC360_GITEditorTarget : TargetRules
 	{
 		Type = TargetType.Editor;
         
-		ExtraModuleNames.AddRange( new string[] { "Telekom_SC360" } );
+		ExtraModuleNames.AddRange( new string[] { "Telekom_SC360", "Telekom_SC360_Editor" } );
 	}
 }
