@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Classes/Components/BillboardComponent.h"
 
+#include "TrafficRoad.h"
 #include "Traffic/TrafficCar.h"
 
 #include "ParkingSlot.generated.h"
@@ -20,17 +21,18 @@ enum class EParkingState : uint8
 };
 
 UCLASS()
-class TELEKOM_SC360_API AParkingSlot : public AActor
+class TELEKOM_SC360_API AParkingSlot : public ATrafficRoad
 {
 	GENERATED_BODY()
 public:
-
+	//For the entry spline we use the default spline of ATrafficRoad
+	/**The spline the car uses to exit the slot*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		USplineComponent* entrySpline;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		USplineComponent* exitSpline;
+		USplineComponent* exitSpline;			// the exit spline's first point should be (0, 0, 0) relative to the Root, and the tangent should face outwardsfrom the ParkingSlot
+	/**The billboard component for easy handling*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UBillboardComponent* billboard;
+	/**Sets if the spline should fit the ParkingPassthrough location and tangent or not (at BeginPlay?)*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		bool bAutoSpline;
 	UPROPERTY(BlueprintReadWrite)
