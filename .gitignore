@@ -1,5 +1,4 @@
 Binaries/*/*
-!Binaries/*/UE4Editor.modules
 !Binaries/*/UE4Editor-Telekom_SC360.dll
 DerivedDataCache
 Intermediate
