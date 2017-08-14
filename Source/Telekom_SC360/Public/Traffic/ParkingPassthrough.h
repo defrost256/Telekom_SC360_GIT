@@ -31,7 +31,7 @@ public:
 		
 	UPROPERTY(BlueprintReadOnly)
 		TMap<int, int> assignedSlots;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TArray<AParkingSlot*> parkingSlots;
 	UPROPERTY(BlueprintReadOnly)
 		int size;

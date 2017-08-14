@@ -11,6 +11,7 @@ void AParkingPassthrough::AssignSlot(int slot, ATrafficCar* car)
 {
 	assignedSlots.Add(car->GetUniqueID(), slot);
 	assignedFlags |= ((uint64)1 << slot);
+	parkingSlots[slot]->SetCar(car, car->time);
 }
 
 void AParkingPassthrough::FreeSlot(int slot)
@@ -24,7 +25,7 @@ TArray<int> AParkingPassthrough::GetAssignedSlots()
 	int j = 0;
 	for (uint64 i = 1; j < size; i <<= 1)
 	{
-		if (!(assignedFlags & i))
+		if (assignedFlags & i)
 		{
 			ret.Add(j);
 		}
@@ -39,7 +40,7 @@ TArray<int> AParkingPassthrough::GetFreeSlots()
 	int j = 0;
 	for (uint64 i = 1; j < size; i <<= 1)
 	{
-		if (assignedFlags & i)
+		if (!(assignedFlags & i))
 		{
 			ret.Add(j);
 		}
@@ -63,7 +64,9 @@ void AParkingPassthrough::AddCar(ATrafficCar * newCar)
 {
 	Super::AddCar(newCar);
 	TArray<int> freeSlots = GetFreeSlots();
-	AssignSlot(freeSlots[FMath::RandRange(0, freeSlots.Num())], newCar);
+	if (freeSlots.Num() == 0)
+		return;
+	AssignSlot(freeSlots[FMath::RandRange(0, freeSlots.Num() - 1)], newCar);
 }
 
 bool AParkingPassthrough::IsLeaf()
@@ -80,6 +83,11 @@ void AParkingPassthrough::DetachCar(ATrafficCar * car)
 void AParkingPassthrough::Initialize_Implementation()
 {
 	length = spline->GetSplineLength();
+	size = parkingSlots.Num();
+	for (AParkingSlot* slot : parkingSlots)
+	{
+
+	}
 }
 
 FTransform AParkingPassthrough::GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID)
@@ -107,14 +115,14 @@ float AParkingPassthrough::GetDesiredSpeed(float time, int carID)
 {
 	if (!assignedSlots.Contains(carID))
 	{
-		return speedCurve->GetFloatValue(time);
+		return (speedCurve ? speedCurve->GetFloatValue(time) : 1) * baseSpeed;
 	}
 	AParkingSlot* currentSlot = parkingSlots[assignedSlots[carID]];
 	if (currentSlot->state == EParkingState::Parking)
 	{
 		return currentSlot->GetDesiredSpeed(time);
 	}
-	return 0;
+	return (speedCurve ? speedCurve->GetFloatValue(time) : 1) * baseSpeed;
 }
 
 bool AParkingPassthrough::CanLeaveRoad(float time, int carID)

@@ -53,6 +53,7 @@ bool AParkingSlot::SetCar(ATrafficCar * car, float time)
 	if (HasCar())
 		return false;
 	carStartTime = time;
+	state = EParkingState::Arriving;
 	currentCar = car;
 	return true;
 }
@@ -61,6 +62,7 @@ ATrafficCar* AParkingSlot::RemoveCar()
 {
 	ATrafficCar* ret = currentCar;
 	currentCar = nullptr;
+	state = EParkingState::None;
 	return ret;
 }
 
@@ -73,7 +75,11 @@ float AParkingSlot::GetDesiredSpeed(float time)
 AParkingSlot::AParkingSlot()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+#if UE_BUILD_SHIPPING
 	PrimaryActorTick.bCanEverTick = false;
+#else
+	PrimaryActorTick.bCanEverTick = true;  
+#endif // UE_BUILD_SHIPPING
 	 
 	ConstructorHelpers::FObjectFinder<UTexture2D> billboardTexture(TEXT("Texture2D'/Engine/EditorResources/Waypoint.Waypoint'"));
 	billboard = CreateDefaultSubobject<UBillboardComponent>(TEXT("Root Component"));

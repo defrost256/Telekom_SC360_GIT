@@ -47,24 +47,24 @@ public:
 	// Sets default values for this actor's properties
 	AParkingSlot();
 
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		bool CanCarStartParking();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		bool IsCarCloseEnough();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		bool HasCar();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		bool CanCarExit();
 	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
 		bool ParkCar(float time);
 
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		FTransform GetTransformAtTime(float time, ESplineCoordinateSpace::Type coordinateSpace);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
 		bool SetCar(ATrafficCar* car, float time);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
 		ATrafficCar* RemoveCar();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		float GetDesiredSpeed(float time);
 
 protected:

@@ -34,6 +34,11 @@ void ATrafficCar::Tick(float DeltaTime)
 
 }
 
+int ATrafficCar::GetUniqueID_Int()
+{
+	return GetUniqueID();
+}
+
 void ATrafficCar::Despawn()
 {
 	SetActorHiddenInGame(true);
@@ -128,17 +133,7 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 		else
 			road->CarFinished(this, (forcedProgress < forcedPath.Num() ? forcedPath[++forcedProgress] : nullptr));
 	}
-
-	// DEBUG
-	if (debugDraw)
-	{
-		UWorld* world = GetWorld();
-		FVector loc = GetActorLocation();
-		DrawDebugString(world, loc + FVector(0, 0, 200), FString::SanitizeFloat(time), nullptr, FColor::Silver, -1, false);
-		if (!freePath)
-			DrawDebugBox(world, sensingArea->GetComponentLocation(), sensingArea->GetScaledBoxExtent(), sensingArea->GetComponentRotation().Quaternion(), FColor::Red, false, -1, 0, 2);
-		DrawDebugLine(world, loc + FVector(0, 0, 100), loc + speed * GetActorForwardVector() + FVector(0, 0, 100), FColor::Cyan, false, -1, 0, 2);
-	}
+	
 	AfterTrafficTick(DeltaT);
 }
 

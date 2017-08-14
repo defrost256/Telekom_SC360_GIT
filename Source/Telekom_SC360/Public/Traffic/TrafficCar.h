@@ -88,6 +88,8 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		float forcedStopLimit = 1;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Car")
+		int GetUniqueID_Int();
 	/**Despawns the car (this prevents the car from moving, or being sensed by other cars)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void Despawn();
