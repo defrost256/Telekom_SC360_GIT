@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EngineMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Public/DrawDebugHelpers.h"
 
