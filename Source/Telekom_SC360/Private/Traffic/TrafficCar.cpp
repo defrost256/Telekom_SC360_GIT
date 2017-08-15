@@ -8,13 +8,34 @@ ATrafficCar::ATrafficCar()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root Component")));
-	sensingArea = CreateDefaultSubobject<UBoxComponent>(TEXT("Sensing Area"));
 	sensedArea = CreateDefaultSubobject<UBoxComponent>(TEXT("Sensed Area"));
 
-	sensingArea->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FrontSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Front Sensor"));
+	FrontRightSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Front Right Sensor"));
+	FrontLeftSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Front Left Sensor"));
+	RightSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Right Sensor"));
+	LeftSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Left Sensor"));
+	RearSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Rear Sensor"));
+	EmergencySensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Emergency Sensor"));
+
 	sensedArea->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
-	TrafficHelper::SetTrafficReceiverCollision(sensingArea);
+	FrontSensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FrontRightSensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FrontLeftSensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FrontSensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FrontSensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	FrontSensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	EmergencySensor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+
+	TrafficHelper::SetTrafficReceiverCollision(FrontSensor);
+	TrafficHelper::SetTrafficReceiverCollision(FrontRightSensor);
+	TrafficHelper::SetTrafficReceiverCollision(FrontLeftSensor);
+	TrafficHelper::SetTrafficReceiverCollision(RightSensor);
+	TrafficHelper::SetTrafficReceiverCollision(LeftSensor);
+	TrafficHelper::SetTrafficReceiverCollision(RearSensor);
+	TrafficHelper::SetTrafficReceiverCollision(EmergencySensor);
+
 	TrafficHelper::SetTrafficTransmitterCollision(sensedArea);
 }
 
@@ -23,8 +44,21 @@ void ATrafficCar::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	sensingArea->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensingBoxBeginOverlap);
-	sensingArea->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensingBoxEndOverlap);
+	FrontSensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensorBeginOverlap);
+	FrontSensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensorEndOverlap);
+	FrontRightSensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensorBeginOverlap);
+	FrontRightSensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensorEndOverlap);
+	FrontLeftSensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensorBeginOverlap);
+	FrontLeftSensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensorEndOverlap);
+	RightSensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensorBeginOverlap);
+	RightSensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensorEndOverlap);
+	LeftSensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensorBeginOverlap);
+	LeftSensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensorEndOverlap);
+	RearSensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnSensorBeginOverlap);
+	RearSensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnSensorEndOverlap);
+
+	EmergencySensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnEmergencySensorBeginOverlap);
+	EmergencySensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnEmergencySensorEndOverlap);
 }
 
 // Called every frame
@@ -89,6 +123,9 @@ void ATrafficCar::PutOnRoad(ATrafficRoad * newRoad, float roadSpeed, float _time
 	time = _time;
 }
 
+//------------------------------------------------------------------
+//------------------------ Traffic Tick ----------------------------
+//------------------------------------------------------------------
 void ATrafficCar::FTrafficTick(float DeltaT)
 {
 	BeforeTrafficTick(DeltaT);
@@ -118,21 +155,70 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	//Speed
 	targetSpeed = road->GetDesiredSpeed(time, ID) * maxSpeed;
 
+	//Traffic slowdown
+	if (overlapCount > 0)
+	{
+		if (targetSpeed * slowdownMultiplier > GetAvgSpeedOfOverlapCars())
+		{
+			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 0.0f, DeltaT);
+		}
+		else
+		{
+			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 1.0f, DeltaT);
+		}
+		targetSpeed = targetSpeed * slowdownMultiplier;
+	}
+
 	//Is obstructed
 	if (freePath)
 	{
 		forcedStopTime = 0;
-		speed = FMath::Lerp(speed, targetSpeed, FMath::Clamp(DeltaT * accelerationLerpSpeed, float(0), float(1)));
+		speed = FMath::Lerp(speed, targetSpeed, FMath::Clamp(DeltaT * accelerationLerpSpeed, 0.0f, 1.0f));
 	}
 	else
 	{
 		forcedStopTime += DeltaT;
 		if (forcedStopTime > forcedStopLimit)
 			ResolveDeadlock();
-		speed = FMath::Lerp(speed, (float)0, FMath::Clamp(DeltaT * decelerationLerpSpeed, float(0), float(1)));
+		speed = FMath::Lerp(speed, (float)0, FMath::Clamp(DeltaT * decelerationLerpSpeed, 0.0f, 1.0f));
 	}
+
+	//Compute time
 	time += DeltaT * speed;
-	SetWorldTransformNoScale(road->GetTransformAtTime(time, ESplineCoordinateSpace::World, ID));
+
+	//Get new WorldTransform
+	FTransform nextTransform = road->GetTransformAtTime(time, ESplineCoordinateSpace::World, ID);
+
+	//Decide sensor direction
+	float DeltaYaw = nextTransform.Rotator().Yaw - GetActorRotation().Yaw;
+	if (FMath::Abs(DeltaYaw) > 120)
+	{
+		ChangeSensorDirection(ESensorDirection::Rear);
+	}
+	else
+	{
+		if (DeltaYaw > 0)
+		{
+			if (DeltaYaw > 60)
+				ChangeSensorDirection(ESensorDirection::Right);
+			else if (DeltaYaw > 30)
+				ChangeSensorDirection(ESensorDirection::FrontRight);
+			else
+				ChangeSensorDirection(ESensorDirection::Front);
+		}
+		else
+		{
+			if (DeltaYaw < -60)
+				ChangeSensorDirection(ESensorDirection::Left);
+			else if (DeltaYaw < -30)
+				ChangeSensorDirection(ESensorDirection::FrontLeft);
+			else
+				ChangeSensorDirection(ESensorDirection::Front);
+		}
+	}
+
+	//Set WorldTransform
+	SetWorldTransformNoScale(nextTransform);
 
 	//End of the road
 	if (road->CanLeaveRoad(time, ID))
@@ -147,30 +233,46 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	
 	AfterTrafficTick(DeltaT);
 }
+//-------------------------- Tick END ------------------------------
 
-void ATrafficCar::OnSensingBoxBeginOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+
+void ATrafficCar::OnSensorBeginOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	if (OtherActor == this)
+		return;
+	overlapCount++;
+}
+
+void ATrafficCar::OnSensorEndOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor == this)
+		return;
+	overlapCount--;
+}
+
+void ATrafficCar::OnEmergencySensorBeginOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
 	if (OtherActor == this)
 		return;
 	ATrafficCar* otherCar = Cast<ATrafficCar>(OtherActor);
-	if (otherCar != nullptr && !otherCar->sensingArea->IsOverlappingComponent(sensedArea))
+	if (otherCar != nullptr && !otherCar->GetCurrentSensor()->IsOverlappingComponent(sensedArea))
 	{
-		overlapCount++;
+		emergencyOverlap++;
 		freePath = false;
 	}
 }
 
-void ATrafficCar::OnSensingBoxEndOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
+void ATrafficCar::OnEmergencySensorEndOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor == this)
 		return;
 	if (Cast<ATrafficCar>(OtherActor) != nullptr)
 	{
-		overlapCount--;
-		if (overlapCount <= 0)
+		emergencyOverlap--;
+		if (emergencyOverlap <= 0)
 		{
 			freePath = true;
-			overlapCount = 0;
+			emergencyOverlap = 0;
 		}
 	}
 }
@@ -183,7 +285,7 @@ bool ATrafficCar::ResolveDeadlock()
 	deadlockCars.Add(this);
 	for (int i = 0; i < deadlockCars.Num(); i++)
 	{
-		deadlockCars[i]->sensingArea->GetOverlappingActors(tempOverlaps, ATrafficCar::StaticClass());
+		deadlockCars[i]->GetCurrentSensor()->GetOverlappingActors(tempOverlaps, ATrafficCar::StaticClass());
 		for (AActor* a : tempOverlaps)
 		{
 			tmpCar = Cast<ATrafficCar>(a);
@@ -202,6 +304,63 @@ bool ATrafficCar::ResolveDeadlock()
 void ATrafficCar::Bump(float size)
 {
 	time += size;
+}
+
+UBoxComponent * ATrafficCar::GetSensorByDirection(ESensorDirection dir)
+{
+	switch (dir)
+	{
+	case ESensorDirection::Front:
+		return FrontSensor;
+	case ESensorDirection::FrontRight:
+		return FrontRightSensor;
+	case ESensorDirection::FrontLeft:
+		return FrontLeftSensor;
+	case ESensorDirection::Right:
+		return RightSensor;
+	case ESensorDirection::Left:
+		return LeftSensor;
+	case ESensorDirection::Rear:
+		return RearSensor;
+	default:
+		return nullptr;
+	}
+	return nullptr;
+}
+
+void ATrafficCar::ChangeSensorDirection(ESensorDirection newDirection)
+{
+	if (newDirection == activeDirection)
+		return;
+	GetSensorByDirection(activeDirection)->bGenerateOverlapEvents = false;
+	GetSensorByDirection(newDirection)->bGenerateOverlapEvents = true;
+	overlapCount = 0;
+}
+
+UBoxComponent * ATrafficCar::GetCurrentSensor()
+{
+	return GetSensorByDirection(activeDirection);
+}
+
+float ATrafficCar::GetAvgSpeedOfOverlapCars()
+{
+	UBoxComponent* CurrentSensor = GetCurrentSensor();
+	ATrafficCar* OtherCar;
+	const TArray<FOverlapInfo> OverlapInfoCopy(CurrentSensor->GetOverlapInfos());
+	float acc = 0.0f;
+	int cars = 0;
+	for (const FOverlapInfo OtherOverlap : OverlapInfoCopy)
+	{
+		OtherCar = Cast<ATrafficCar>(OtherOverlap.OverlapInfo.GetActor());
+		if (OtherCar)
+		{
+			acc += OtherCar->speed;
+			cars++;
+		}
+	}
+	if (cars != overlapCount)
+		UE_LOG(TrafficLog, Log, TEXT("ERROR - overlapped car count doesn't match ATrafficCar::overlapCount"));
+	return acc / cars;
 }
 
 void ATrafficCar::SetWorldTransformNoScale(FTransform transform)
