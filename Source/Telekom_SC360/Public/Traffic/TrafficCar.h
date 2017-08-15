@@ -90,12 +90,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Car")
 		int GetUniqueID_Int();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Car")
+		bool IsStopped(float tolerance = 0.00001f);
 	/**Despawns the car (this prevents the car from moving, or being sensed by other cars)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void Despawn();
 	/**(Re)spawns the car (this sets the car to the given transform, and enables it to receive ticks, and be sensed by other cars)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void Respawn(FTransform spawnPoint);
+	/**Removes the car from the road, and notifies the Emitter to despawn the car, and put it back in the InactiveQueue*/
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		void Kill();
 	/**Pauses the car, the Car won't tick, and thus it won't move for the specified duration or until UnpauseCar is called. (negative duration means infinite duration)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void PauseCar(float duration = -1);
@@ -104,7 +109,7 @@ public:
 		void UnpauseCar();
 	/**Assigns the road to the car, resets time, and sets the baseSpeed*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		void PutOnRoad(ATrafficRoad* newRoad, float roadSpeed);
+		void PutOnRoad(ATrafficRoad* newRoad, float roadSpeed, float _time = 0);
 	/**Called every traffic frame, when the car is running (active)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void FTrafficTick(float DeltaT);
@@ -116,6 +121,8 @@ public:
 		void OnSensingBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		bool ResolveDeadlock();
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		void Bump(float size = 0.0001f);
 
 	/**Called before every traffic frame*/
 	UFUNCTION(BlueprintImplementableEvent, Category = "Traffic|Car")

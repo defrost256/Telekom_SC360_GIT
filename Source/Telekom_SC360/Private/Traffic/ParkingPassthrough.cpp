@@ -11,12 +11,15 @@ void AParkingPassthrough::AssignSlot(int slot, ATrafficCar* car)
 {
 	assignedSlots.Add(car->GetUniqueID(), slot);
 	assignedFlags |= ((uint64)1 << slot);
-	parkingSlots[slot]->SetCar(car, car->time);
+	UE_LOG(TrafficLog, Log, TEXT("ASSIGNED slot %d to %s"), slot, *car->GetName());
 }
 
 void AParkingPassthrough::FreeSlot(int slot)
 {
-	assignedFlags |= !((uint64)1 << slot);
+	assignedFlags &= !((uint64)1 << slot);
+	parkingSlots[slot]->DetachCar(nullptr);
+	assignedSlots.Remove(*assignedSlots.FindKey(slot));
+	UE_LOG(TrafficLog, Log, TEXT("FREE slot %d"), slot);
 }
 
 TArray<int> AParkingPassthrough::GetAssignedSlots()
@@ -60,6 +63,14 @@ int AParkingPassthrough::GetNumFreeSlots()
 	return count;
 }
 
+void AParkingPassthrough::AddCarFromSlot(ATrafficCar * newCar)
+{
+	currentCars.Add(newCar);
+	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance), parkingSlots[assignedSlots[newCar->GetUniqueID()]]->carStartTime);
+	FreeSlot(assignedSlots[newCar->GetUniqueID()]);
+	UE_LOG(TrafficLog, Log, TEXT("ADD %s from slot to %s"), *newCar->GetName(), *GetName());
+}
+
 void AParkingPassthrough::AddCar(ATrafficCar * newCar)
 {
 	Super::AddCar(newCar);
@@ -86,48 +97,23 @@ void AParkingPassthrough::Initialize_Implementation()
 	size = parkingSlots.Num();
 	for (AParkingSlot* slot : parkingSlots)
 	{
-
+		slot->Initialize();
 	}
 }
 
 FTransform AParkingPassthrough::GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID)
 {
-	if (!assignedSlots.Contains(carID))
-	{
-		return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
-	}
-	AParkingSlot* currentSlot = parkingSlots[assignedSlots[carID]];
-	switch (currentSlot->state)
-	{
-	case EParkingState::Arriving:
-		return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
-	case EParkingState::Parking:
-		return currentSlot->GetTransformAtTime(time, splineCoordinateSpaceType);
-	case EParkingState::Leaving:
-		return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
-	default:
-		break;
-	}
-	return FTransform();
+	return Super::GetTransformAtTime(time, splineCoordinateSpaceType, carID);
 }
 
 float AParkingPassthrough::GetDesiredSpeed(float time, int carID)
 {
-	if (!assignedSlots.Contains(carID))
-	{
-		return (speedCurve ? speedCurve->GetFloatValue(time) : 1) * baseSpeed;
-	}
-	AParkingSlot* currentSlot = parkingSlots[assignedSlots[carID]];
-	if (currentSlot->state == EParkingState::Parking)
-	{
-		return currentSlot->GetDesiredSpeed(time);
-	}
-	return (speedCurve ? speedCurve->GetFloatValue(time) : 1) * baseSpeed;
+	return Super::GetDesiredSpeed(time, carID);
 }
 
 bool AParkingPassthrough::CanLeaveRoad(float time, int carID)
 {
-	return false;
+	return Super::CanLeaveRoad(time, carID);
 }
 
 void AParkingPassthrough::FTrafficTick(float DeltaT)
@@ -135,31 +121,45 @@ void AParkingPassthrough::FTrafficTick(float DeltaT)
 	BeforeTrafficTick(DeltaT);
 	for (ATrafficCar* car : currentCars)
 	{
+		car->FTrafficTick(DeltaT);
+
 		int ID = car->GetUniqueID();
 		if (assignedSlots.Contains(ID))
 		{
 			AParkingSlot* currentSlot = parkingSlots[assignedSlots[ID]];
-			switch (currentSlot->state)
+			if (currentSlot->CanCarStartParking(car->GetActorLocation()))
 			{
-			case EParkingState::Arriving:
-				if (currentSlot->CanCarStartParking())
-				{
-					currentSlot->state = EParkingState::Parking;
-				}
-				break;
-			case EParkingState::Parking:
-				if (currentSlot->CanCarExit())
-				{
-					currentSlot->state = EParkingState::Leaving;
-				}
-				break;
-			case EParkingState::Leaving:
-				break;
-			default:
-				return;
+				currentSlot->AddCar(car);
+				removeList.Add(car);
+			}
+			else
+			{
+				car->FTrafficTick(DeltaT);
 			}
 		}
-		car->FTrafficTick(DeltaT);
 	}
+	for (ATrafficCar* removeCar : removeList)
+	{
+		currentCars.Remove(removeCar);
+	}
+	removeList.Empty();
+	for (AParkingSlot* slot : parkingSlots)
+	{
+		slot->FTrafficTick(DeltaT);
+	}
+	/*for (auto& slotIdx : assignedSlots)
+	{
+		parkingSlots[slotIdx.Value]->FTrafficTick(DeltaT);
+	}*/
 	AfterTrafficTick(DeltaT);
+}
+
+void AParkingPassthrough::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
+{
+	int ID = car->GetUniqueID();
+	if (assignedSlots.Contains(ID))
+		FreeSlot(assignedSlots[ID]);
+	else
+		UE_LOG(TrafficLog, Log, TEXT("Unassigned car finished"));
+	Super::CarFinished(car, forcedRoad);
 }

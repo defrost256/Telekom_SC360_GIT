@@ -23,10 +23,6 @@ class TELEKOM_SC360_API AParkingPassthrough : public ATrafficRoad
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float parkTime;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float parkTimeVariance;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float parkingChance;
 		
 	UPROPERTY(BlueprintReadOnly)
@@ -53,14 +49,19 @@ public:
 		TArray<int> GetFreeSlots();
 	UFUNCTION(BLueprintCallable, Category = "Traffic|PPassthrough")
 		int GetNumFreeSlots();
+	UFUNCTION(BLueprintCallable, Category = "Traffic|PPassthrough")
+		virtual void AddCarFromSlot(ATrafficCar* newCar);
 
-	void AddCar(ATrafficCar* newCar) override;
-	bool IsLeaf() override;
-	void DetachCar(ATrafficCar* car) override;
-	void Initialize_Implementation() override;
-	FTransform GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID) override;
-	float GetDesiredSpeed(float time, int carID) override;
-	bool CanLeaveRoad(float time, int carID) override;
-	void FTrafficTick(float DeltaT) override;
+
+	virtual void AddCar(ATrafficCar* newCar) override;
+	virtual bool IsLeaf() override;
+	virtual void DetachCar(ATrafficCar* car) override;
+	virtual void Initialize_Implementation() override;
+	virtual FTransform GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID) override;
+	virtual float GetDesiredSpeed(float time, int carID) override;
+	virtual bool CanLeaveRoad(float time, int carID) override;
+	virtual void FTrafficTick(float DeltaT) override;
+	virtual void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad) override;
+
 };
 
