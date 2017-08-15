@@ -23,10 +23,6 @@ class TELEKOM_SC360_API AParkingPassthrough : public ATrafficRoad
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float parkTime;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float parkTimeVariance;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float parkingChance;
 		
 	UPROPERTY(BlueprintReadOnly)

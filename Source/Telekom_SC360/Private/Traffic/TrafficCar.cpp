@@ -39,6 +39,11 @@ int ATrafficCar::GetUniqueID_Int()
 	return GetUniqueID();
 }
 
+bool ATrafficCar::IsStopped(float tolerance)
+{
+	return FMath::IsNearlyEqual(speed, 0.0f, tolerance);
+}
+
 void ATrafficCar::Despawn()
 {
 	SetActorHiddenInGame(true);
@@ -56,6 +61,13 @@ void ATrafficCar::Respawn(FTransform spawnPoint)
 	forcedProgress = 1;
 	freePath = true;
 	SetWorldTransformNoScale(spawnPoint);
+}
+
+void ATrafficCar::Kill()
+{
+	if (road)
+		road->DetachCar(this);
+	emitter->CarFinished(this);
 }
 
 void ATrafficCar::PauseCar(float duration)
@@ -127,8 +139,7 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	{
 		if (road->IsLeaf())
 		{
-			road->DetachCar(this);
-			emitter->CarFinished(this);
+			Kill();
 		}
 		else
 			road->CarFinished(this, (forcedProgress < forcedPath.Num() ? forcedPath[++forcedProgress] : nullptr));
@@ -186,6 +197,11 @@ bool ATrafficCar::ResolveDeadlock()
 		}
 	}
 	return false;
+}
+
+void ATrafficCar::Bump(float size)
+{
+	time += size;
 }
 
 void ATrafficCar::SetWorldTransformNoScale(FTransform transform)

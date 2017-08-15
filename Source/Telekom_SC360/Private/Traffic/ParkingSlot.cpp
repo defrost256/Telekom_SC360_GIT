@@ -5,104 +5,107 @@
 
 bool AParkingSlot::CanCarStartParking()
 {
-	if (!HasCar())
+	if (!HasCar() || state != EParkingState::Arriving)
 		return false;
-	return FVector::Dist(currentCar->GetActorLocation(), entrySpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World)) < 2;
+	return FVector::Dist(currentCars[0]->GetActorLocation(), spline->GetLocationAtSplinePoint(1, ESplineCoordinateSpace::World)) < 2;
 }
 
 bool AParkingSlot::IsCarCloseEnough()
 {
 	if (!HasCar())
 		return false;
-	return GetDistanceTo(currentCar) < 2;
+	return GetDistanceTo(currentCars[0]) < 2;
 }
 
 bool AParkingSlot::HasCar()
 {
-	return currentCar != nullptr;
+	return currentCars[0] != nullptr;
 }
 
-bool AParkingSlot::CanCarExit()
-{
-	if(!HasCar())
-		return false;
-	return FVector::Dist(currentCar->GetActorLocation(), exitSpline->GetLocationAtSplinePoint(1, ESplineCoordinateSpace::World)) < 2;
-}
-
-bool AParkingSlot::ParkCar(float time)
-{
-	if(!HasCar())
-		return false;
-	currentCar->PauseCar(time);
-	return true;
-}
-
-FTransform AParkingSlot::GetTransformAtTime(float time, ESplineCoordinateSpace::Type coordinateSpace)
-{
-	float delta = time - carStartTime;
-	if (delta > entrySpline->GetSplineLength())
-	{
-		return exitSpline->GetTransformAtDistanceAlongSpline(delta - entryTime, ESplineCoordinateSpace::World);
-	}
-	entryTime = delta;
-	return entrySpline->GetTransformAtDistanceAlongSpline(delta, ESplineCoordinateSpace::World);
-}
-
-bool AParkingSlot::SetCar(ATrafficCar * car, float time)
+void AParkingSlot::AddCar(ATrafficCar * newCar)
 {
 	if (HasCar())
-		return false;
-	carStartTime = time;
+	{
+		newCar->Kill();
+		return;
+	}
+	carStartTime = newCar->time;
 	state = EParkingState::Arriving;
-	currentCar = car;
-	return true;
+	currentCars[0] = newCar;
+	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance));
 }
 
-ATrafficCar* AParkingSlot::RemoveCar()
+bool AParkingSlot::IsLeaf()
 {
-	ATrafficCar* ret = currentCar;
-	currentCar = nullptr;
+	return false;
+}
+
+FTransform AParkingSlot::GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID)
+{
+	if (time > length)
+	{
+		return spline->GetTransformAtDistanceAlongSpline(2 * length - time, splineCoordinateSpaceType);
+	}
+	return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
+}
+
+float AParkingSlot::GetDesiredSpeed(float time, int carID)
+{
+	if (time > length)
+	{
+		return (exitSpeedCurve ? exitSpeedCurve->GetFloatValue(2 * length - time) : 1);
+	}
+	return (speedCurve ? speedCurve->GetFloatValue(time) : 1);
+}
+
+bool AParkingSlot::CanLeaveRoad(float time, int carID)
+{
+	if (!HasCar() || state != EParkingState::Leaving)
+		return false;
+	return FVector::Dist(currentCars[0]->GetActorLocation(), spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World)) < 2;
+}
+
+void AParkingSlot::FTrafficTick(float DeltaT)
+{
+	BeforeTrafficTick(DeltaT);
+	if (HasCar())
+	{
+		if (IsCarCloseEnough())
+		{
+			currentCars[0]->PauseCar(parkTime + FMath::RandRange(0.0f, parkTimeVariance));
+		}
+		else
+		{
+			if (currentCars[0]->IsStopped())
+				currentCars[0]->Bump();
+			currentCars[0]->FTrafficTick(DeltaT);
+		}
+	}
+	AfterTrafficTick(DeltaT);
+}
+
+void AParkingSlot::DetachCar(ATrafficCar * car)
+{
+	currentCars[0] = nullptr;
 	state = EParkingState::None;
-	return ret;
 }
 
-float AParkingSlot::GetDesiredSpeed(float time)
+void AParkingSlot::Initialize_Implementation()
 {
-	return 0.0f;
+	Super::Initialize_Implementation();
 }
 
 // Sets default values
 AParkingSlot::AParkingSlot()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-#if UE_BUILD_SHIPPING
 	PrimaryActorTick.bCanEverTick = false;
-#else
-	PrimaryActorTick.bCanEverTick = true;  
-#endif // UE_BUILD_SHIPPING
+
+	currentCars.SetNum(1);
 	 
 	ConstructorHelpers::FObjectFinder<UTexture2D> billboardTexture(TEXT("Texture2D'/Engine/EditorResources/Waypoint.Waypoint'"));
 	billboard = CreateDefaultSubobject<UBillboardComponent>(TEXT("Root Component"));
 	billboard->SetSprite(billboardTexture.Object);
 	SetRootComponent(billboard);
-
-	entrySpline = CreateDefaultSubobject<USplineComponent>(TEXT("EntrySpline"));
-	exitSpline = CreateDefaultSubobject<USplineComponent>(TEXT("ExitSpline"));
-
-	entrySpline->EditorUnselectedSplineSegmentColor = FColor(255, 171, 38, 255);
-	exitSpline->EditorUnselectedSplineSegmentColor = FColor(194, 255, 108, 255);
-
-	entrySpline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	exitSpline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-
-	entrySpline->SetLocationAtSplinePoint(0, FVector(-50, -50, 0), ESplineCoordinateSpace::Local);
-	entrySpline->SetLocationAtSplinePoint(1, FVector(0, 0, 0), ESplineCoordinateSpace::Local);
-	exitSpline->SetLocationAtSplinePoint(1, FVector(-50, 50, 0), ESplineCoordinateSpace::Local);
-
-	entrySpline->SetTangentAtSplinePoint(1, FVector(50, 0, 0), ESplineCoordinateSpace::Local);
-	entrySpline->SetTangentAtSplinePoint(0, FVector(0, 50, 0), ESplineCoordinateSpace::Local);
-	exitSpline->SetTangentAtSplinePoint(0, FVector(-50, 0, 0), ESplineCoordinateSpace::Local);
-	exitSpline->SetTangentAtSplinePoint(1, FVector(0, 50, 0), ESplineCoordinateSpace::Local);
 }
 
 // Called when the game starts or when spawned

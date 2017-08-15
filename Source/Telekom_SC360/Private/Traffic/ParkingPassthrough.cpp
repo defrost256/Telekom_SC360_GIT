@@ -11,7 +11,7 @@ void AParkingPassthrough::AssignSlot(int slot, ATrafficCar* car)
 {
 	assignedSlots.Add(car->GetUniqueID(), slot);
 	assignedFlags |= ((uint64)1 << slot);
-	parkingSlots[slot]->SetCar(car, car->time);
+	parkingSlots[slot]->AddCar(car);
 }
 
 void AParkingPassthrough::FreeSlot(int slot)
@@ -102,7 +102,7 @@ FTransform AParkingPassthrough::GetTransformAtTime(float time, ESplineCoordinate
 	case EParkingState::Arriving:
 		return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
 	case EParkingState::Parking:
-		return currentSlot->GetTransformAtTime(time, splineCoordinateSpaceType);
+		return currentSlot->GetTransformAtTime(time, splineCoordinateSpaceType, carID);
 	case EParkingState::Leaving:
 		return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
 	default:
@@ -120,7 +120,7 @@ float AParkingPassthrough::GetDesiredSpeed(float time, int carID)
 	AParkingSlot* currentSlot = parkingSlots[assignedSlots[carID]];
 	if (currentSlot->state == EParkingState::Parking)
 	{
-		return currentSlot->GetDesiredSpeed(time);
+		return currentSlot->GetDesiredSpeed(time, carID);
 	}
 	return (speedCurve ? speedCurve->GetFloatValue(time) : 1) * baseSpeed;
 }
@@ -148,7 +148,7 @@ void AParkingPassthrough::FTrafficTick(float DeltaT)
 				}
 				break;
 			case EParkingState::Parking:
-				if (currentSlot->CanCarExit())
+				if (currentSlot->CanLeaveRoad(car->time, ID))
 				{
 					currentSlot->state = EParkingState::Leaving;
 				}
