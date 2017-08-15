@@ -7,6 +7,7 @@
 #include "Classes/Components/SplineComponent.h"
 #include "Classes/Curves/CurveFloat.h"
 
+#include "Telekom_SC360.h"
 #include "TrafficCar.h"
 
 #include "TrafficRoad.generated.h"
@@ -46,6 +47,8 @@ public:
 	/**The current cars taking the path*/
 	UPROPERTY(BlueprintReadWrite)
 		TArray<ATrafficCar*> currentCars;
+	UPROPERTY(BlueprintReadOnly)
+		TArray<ATrafficCar*> removeList;
 	/**The length of the road (in uu)*/
 	UPROPERTY(BlueprintReadWrite)
 		float length;
@@ -59,7 +62,7 @@ public:
 		virtual void AddCar(ATrafficCar* newCar);
 	/**Called when a car has reached the end of the path, and the path has child paths*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Road")
-		void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad);
+		virtual void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad);
 
 
 	/**Gets the shortest route to the given path (using A*)*/

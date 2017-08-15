@@ -66,7 +66,7 @@ void ATrafficCar::Respawn(FTransform spawnPoint)
 void ATrafficCar::Kill()
 {
 	if (road)
-		road->DetachCar(this);
+		road->CarFinished(this, nullptr);
 	emitter->CarFinished(this);
 }
 
@@ -82,11 +82,11 @@ void ATrafficCar::UnpauseCar()
 	paused = false;
 }
 
-void ATrafficCar::PutOnRoad(ATrafficRoad * newRoad, float roadSpeed)
+void ATrafficCar::PutOnRoad(ATrafficRoad * newRoad, float roadSpeed, float _time)
 {
 	road = newRoad;
 	maxSpeed = speedMultiplier * roadSpeed;
-	time = 0;
+	time = _time;
 }
 
 void ATrafficCar::FTrafficTick(float DeltaT)
@@ -98,7 +98,7 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	{
 		if (pauseLimit > 0)
 		{
-			if (pauseTime > pauseLimit)
+			if (pauseTime < pauseLimit)
 			{
 				pauseTime += DeltaT;
 				return;

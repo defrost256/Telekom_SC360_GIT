@@ -3,23 +3,32 @@
 #include "ParkingSlot.h"
 
 
-bool AParkingSlot::CanCarStartParking()
+bool AParkingSlot::CanCarStartParking(FVector position)
 {
-	if (!HasCar() || state != EParkingState::Arriving)
-		return false;
-	return FVector::Dist(currentCars[0]->GetActorLocation(), spline->GetLocationAtSplinePoint(1, ESplineCoordinateSpace::World)) < 2;
+	float d = FVector::Dist(position, spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World));
+	//UE_LOG(TrafficLog, Log, TEXT("Distance to parking spot"));
+	return d < carGrabDistance;
 }
 
 bool AParkingSlot::IsCarCloseEnough()
 {
 	if (!HasCar())
 		return false;
-	return GetDistanceTo(currentCars[0]) < 2;
+	return GetDistanceTo(currentCars[0]) < carGrabDistance;
 }
 
 bool AParkingSlot::HasCar()
 {
 	return currentCars[0] != nullptr;
+}
+
+void AParkingSlot::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
+{
+	OnCarFinished(car, forcedRoad);
+	currentCars[0] = nullptr;
+	parent->AddCarFromSlot(car);
+	state = EParkingState::None;
+	UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *parent->GetName());
 }
 
 void AParkingSlot::AddCar(ATrafficCar * newCar)
@@ -33,6 +42,7 @@ void AParkingSlot::AddCar(ATrafficCar * newCar)
 	state = EParkingState::Arriving;
 	currentCars[0] = newCar;
 	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance));
+	UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
 }
 
 bool AParkingSlot::IsLeaf()
@@ -62,7 +72,7 @@ bool AParkingSlot::CanLeaveRoad(float time, int carID)
 {
 	if (!HasCar() || state != EParkingState::Leaving)
 		return false;
-	return FVector::Dist(currentCars[0]->GetActorLocation(), spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World)) < 2;
+	return FVector::Dist(currentCars[0]->GetActorLocation(), spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World)) < carGrabDistance;
 }
 
 void AParkingSlot::FTrafficTick(float DeltaT)
@@ -70,9 +80,11 @@ void AParkingSlot::FTrafficTick(float DeltaT)
 	BeforeTrafficTick(DeltaT);
 	if (HasCar())
 	{
-		if (IsCarCloseEnough())
+		if (state == EParkingState::Arriving && IsCarCloseEnough())
 		{
-			currentCars[0]->PauseCar(parkTime + FMath::RandRange(0.0f, parkTimeVariance));
+			state = EParkingState::Parking;
+			currentCars[0]->PauseCar(parkTime + FMath::RandRange(-parkTimeVariance, parkTimeVariance));
+			state = EParkingState::Leaving;
 		}
 		else
 		{
@@ -86,6 +98,9 @@ void AParkingSlot::FTrafficTick(float DeltaT)
 
 void AParkingSlot::DetachCar(ATrafficCar * car)
 {
+	if (!HasCar())
+		return;
+	UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *currentCars[0]->GetName(), *GetName());
 	currentCars[0] = nullptr;
 	state = EParkingState::None;
 }
@@ -93,19 +108,26 @@ void AParkingSlot::DetachCar(ATrafficCar * car)
 void AParkingSlot::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
+	parent = Cast<AParkingPassthrough>(childRoads[0]);
 }
 
 // Sets default values
 AParkingSlot::AParkingSlot()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
 	currentCars.SetNum(1);
 	 
 	ConstructorHelpers::FObjectFinder<UTexture2D> billboardTexture(TEXT("Texture2D'/Engine/EditorResources/Waypoint.Waypoint'"));
 	billboard = CreateDefaultSubobject<UBillboardComponent>(TEXT("Root Component"));
 	billboard->SetSprite(billboardTexture.Object);
 	SetRootComponent(billboard);
+
+	spline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	spline->EditorUnselectedSplineSegmentColor = FColor(255, 171, 38, 255);
+
+	spline->SetLocationAtSplinePoint(0, FVector(-50, -50, 0), ESplineCoordinateSpace::Local);
+	spline->SetLocationAtSplinePoint(1, FVector(0, 0, 0), ESplineCoordinateSpace::Local);
+	spline->SetTangentAtSplinePoint(0, FVector(0, 50, 0), ESplineCoordinateSpace::Local);
+	spline->SetTangentAtSplinePoint(1, FVector(150, 0, 0), ESplineCoordinateSpace::Local);
 }
 
 // Called when the game starts or when spawned

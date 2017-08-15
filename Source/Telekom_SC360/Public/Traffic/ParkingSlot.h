@@ -7,9 +7,12 @@
 #include "Classes/Components/BillboardComponent.h"
 
 #include "TrafficRoad.h"
+#include "ParkingPassthrough.h"
 #include "Traffic/TrafficCar.h"
 
 #include "ParkingSlot.generated.h"
+
+class AParkingPassthrough;
 
 UENUM(BlueprintType)
 enum class EParkingState : uint8
@@ -31,6 +34,8 @@ public:
 		UBillboardComponent* billboard;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UCurveFloat* exitSpeedCurve;
+	UPROPERTY(BlueprintReadOnly)
+		AParkingPassthrough* parent;
 	/**Sets if the spline should fit the ParkingPassthrough location and tangent or not (at BeginPlay?)*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		bool bAutoSpline;
@@ -38,6 +43,8 @@ public:
 		float parkTime;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float parkTimeVariance;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float carGrabDistance = 10;
 	/**The distancealongetime of the  the car entered the */
 	UPROPERTY(BlueprintReadWrite)
 		float carStartTime;
@@ -51,12 +58,13 @@ public:
 	AParkingSlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
-		bool CanCarStartParking();
+		bool CanCarStartParking(FVector position);
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		bool IsCarCloseEnough();
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
-		bool HasCar();
+		bool HasCar();	
 
+	virtual void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad) override;
 	virtual void AddCar(ATrafficCar* newCar) override;
 	virtual bool IsLeaf() override;
 	virtual FTransform GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID) override;
@@ -71,6 +79,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	bool bCarFlag;
 
 public:	
 	// Called every frame
