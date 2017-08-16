@@ -3,100 +3,131 @@
 #include "ParkingSlot.h"
 
 
-bool AParkingSlot::CanCarStartParking()
+bool AParkingSlot::CanCarStartParking(FVector position)
 {
-	if (!HasCar())
-		return false;
-	return FVector::Dist(currentCar->GetActorLocation(), entrySpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World)) < 2;
+	float d = FVector::Dist(position, spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World));
+	//UE_LOG(TrafficLog, Log, TEXT("Distance to parking spot"));
+	return d < carGrabDistance;
 }
 
 bool AParkingSlot::IsCarCloseEnough()
 {
 	if (!HasCar())
 		return false;
-	return GetDistanceTo(currentCar) < 2;
+	return GetDistanceTo(currentCars[0]) < carGrabDistance;
 }
 
 bool AParkingSlot::HasCar()
 {
-	return currentCar != nullptr;
+	return currentCars[0] != nullptr;
 }
 
-bool AParkingSlot::CanCarExit()
+void AParkingSlot::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
 {
-	if(!HasCar())
-		return false;
-	return FVector::Dist(currentCar->GetActorLocation(), exitSpline->GetLocationAtSplinePoint(1, ESplineCoordinateSpace::World)) < 2;
+	OnCarFinished(car, forcedRoad);
+	currentCars[0] = nullptr;
+	parent->AddCarFromSlot(car);
+	state = EParkingState::None;
+	//UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *parent->GetName());
 }
 
-bool AParkingSlot::ParkCar(float time)
-{
-	if(!HasCar())
-		return false;
-	currentCar->PauseCar(time);
-	return true;
-}
-
-FTransform AParkingSlot::GetTransformAtTime(float time, ESplineCoordinateSpace::Type coordinateSpace)
-{
-	float delta = time - carStartTime;
-	if (delta > entrySpline->GetSplineLength())
-	{
-		return exitSpline->GetTransformAtDistanceAlongSpline(delta - entryTime, ESplineCoordinateSpace::World);
-	}
-	entryTime = delta;
-	return entrySpline->GetTransformAtDistanceAlongSpline(delta, ESplineCoordinateSpace::World);
-}
-
-bool AParkingSlot::SetCar(ATrafficCar * car, float time)
+void AParkingSlot::AddCar(ATrafficCar * newCar)
 {
 	if (HasCar())
+	{
+		newCar->Kill();
+		return;
+	}
+	carStartTime = newCar->time;
+	state = EParkingState::Arriving;
+	currentCars[0] = newCar;
+	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance));
+	//UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
+}
+
+bool AParkingSlot::IsLeaf()
+{
+	return false;
+}
+
+FTransform AParkingSlot::GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID)
+{
+	if (time > length)
+	{
+		return spline->GetTransformAtDistanceAlongSpline(2 * length - time, splineCoordinateSpaceType);
+	}
+	return spline->GetTransformAtDistanceAlongSpline(time, splineCoordinateSpaceType);
+}
+
+float AParkingSlot::GetDesiredSpeed(float time, int carID)
+{
+	if (time > length)
+	{
+		return (exitSpeedCurve ? exitSpeedCurve->GetFloatValue(2 * length - time) : 1);
+	}
+	return (speedCurve ? speedCurve->GetFloatValue(time) : 1);
+}
+
+bool AParkingSlot::CanLeaveRoad(float time, int carID)
+{
+	if (!HasCar() || state != EParkingState::Leaving)
 		return false;
-	carStartTime = time;
-	currentCar = car;
-	return true;
+	return FVector::Dist(currentCars[0]->GetActorLocation(), spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World)) < carGrabDistance;
 }
 
-ATrafficCar* AParkingSlot::RemoveCar()
+void AParkingSlot::FTrafficTick(float DeltaT)
 {
-	ATrafficCar* ret = currentCar;
-	currentCar = nullptr;
-	return ret;
+	BeforeTrafficTick(DeltaT);
+	if (HasCar())
+	{
+		if (state == EParkingState::Arriving && IsCarCloseEnough())
+		{
+			state = EParkingState::Parking;
+			currentCars[0]->PauseCar(parkTime + FMath::RandRange(-parkTimeVariance, parkTimeVariance));
+			state = EParkingState::Leaving;
+		}
+		else
+		{
+			if (currentCars[0]->IsStopped())
+				currentCars[0]->Bump();
+			currentCars[0]->FTrafficTick(DeltaT);
+		}
+	}
+	AfterTrafficTick(DeltaT);
 }
 
-float AParkingSlot::GetDesiredSpeed(float time)
+void AParkingSlot::DetachCar(ATrafficCar * car)
 {
-	return 0.0f;
+	if (!HasCar())
+		return;
+	//UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *currentCars[0]->GetName(), *GetName());
+	currentCars[0] = nullptr;
+	state = EParkingState::None;
+}
+
+void AParkingSlot::Initialize_Implementation()
+{
+	Super::Initialize_Implementation();
+	parent = Cast<AParkingPassthrough>(childRoads[0]);
 }
 
 // Sets default values
 AParkingSlot::AParkingSlot()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	currentCars.SetNum(1);
 	 
 	ConstructorHelpers::FObjectFinder<UTexture2D> billboardTexture(TEXT("Texture2D'/Engine/EditorResources/Waypoint.Waypoint'"));
 	billboard = CreateDefaultSubobject<UBillboardComponent>(TEXT("Root Component"));
 	billboard->SetSprite(billboardTexture.Object);
 	SetRootComponent(billboard);
 
-	entrySpline = CreateDefaultSubobject<USplineComponent>(TEXT("EntrySpline"));
-	exitSpline = CreateDefaultSubobject<USplineComponent>(TEXT("ExitSpline"));
+	spline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	spline->EditorUnselectedSplineSegmentColor = FColor(255, 171, 38, 255);
 
-	entrySpline->EditorUnselectedSplineSegmentColor = FColor(255, 171, 38, 255);
-	exitSpline->EditorUnselectedSplineSegmentColor = FColor(194, 255, 108, 255);
-
-	entrySpline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	exitSpline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-
-	entrySpline->SetLocationAtSplinePoint(0, FVector(-50, -50, 0), ESplineCoordinateSpace::Local);
-	entrySpline->SetLocationAtSplinePoint(1, FVector(0, 0, 0), ESplineCoordinateSpace::Local);
-	exitSpline->SetLocationAtSplinePoint(1, FVector(-50, 50, 0), ESplineCoordinateSpace::Local);
-
-	entrySpline->SetTangentAtSplinePoint(1, FVector(50, 0, 0), ESplineCoordinateSpace::Local);
-	entrySpline->SetTangentAtSplinePoint(0, FVector(0, 50, 0), ESplineCoordinateSpace::Local);
-	exitSpline->SetTangentAtSplinePoint(0, FVector(-50, 0, 0), ESplineCoordinateSpace::Local);
-	exitSpline->SetTangentAtSplinePoint(1, FVector(0, 50, 0), ESplineCoordinateSpace::Local);
+	spline->SetLocationAtSplinePoint(0, FVector(-50, -50, 0), ESplineCoordinateSpace::Local);
+	spline->SetLocationAtSplinePoint(1, FVector(0, 0, 0), ESplineCoordinateSpace::Local);
+	spline->SetTangentAtSplinePoint(0, FVector(0, 50, 0), ESplineCoordinateSpace::Local);
+	spline->SetTangentAtSplinePoint(1, FVector(150, 0, 0), ESplineCoordinateSpace::Local);
 }
 
 // Called when the game starts or when spawned

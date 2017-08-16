@@ -23,12 +23,14 @@ class TELEKOM_SC360_API ATrafficProbe : public AActor, public ITrafficDataCollec
 	
 public:	
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Traffic")
-		bool bDebugRoadTime;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Traffic|SpeedCurve")
+		bool bDebugSpeedCurve;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Traffic")
 		bool bAutoTargetRoad;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Traffic")
 		AActor* targetRoad;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Traffic|SpeedCurve")
+		FColor SpeedCurveDebugColor;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Traffic")
 		bool bUpdateOnlyOnFinishedMove = true;
@@ -39,7 +41,10 @@ public:
 
 
 	UPROPERTY(BlueprintReadWrite)
-		FTrafficData lastData;
+		FTrafficData currentData;
+
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Probing")
+		FVector4 FindLocationAndDistanceAlongSplineNearLocation(USplineComponent* spline, FVector loc, float precision = 0.0001);
 
 	// Sets default values for this actor's properties
 	ATrafficProbe();
@@ -66,7 +71,7 @@ public:
 #endif //WITH_EDITOR
 
 	//---------------- ITrafficDataCollectorInterface IMPLEMENTATION
-	FTrafficData GetTrafficData() override;
+	const FTrafficData* GetTrafficData() const override;
 	//---------------- ITrafficDataCollectorInterface END
 
 protected:

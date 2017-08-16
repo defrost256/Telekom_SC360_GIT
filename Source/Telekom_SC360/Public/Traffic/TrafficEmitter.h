@@ -50,7 +50,7 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		UBillboardComponent* root;
 	/**The area which the emitter checks to see if there is no car in the way of spawning*/
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UBoxComponent* startArea;
 	/**The list of cars currently traversing the graph*/
 	UPROPERTY(BlueprintReadWrite)
@@ -96,6 +96,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Emitter")
 		int KillPercentOfCars(float killPercent);
 
+	/**Called before every traffic frame*/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Traffic|Car")
+		void BeforeTrafficTick(float DeltaT);
+	/**Called after every traffic frame*/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Traffic|Car")
+		void AfterTrafficTick(float DeltaT);
 	UFUNCTION(BlueprintNativeEvent, Category = "Traffic|Emitter")
 		void Initialize();
 

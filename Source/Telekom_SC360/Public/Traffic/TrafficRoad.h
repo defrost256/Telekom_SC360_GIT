@@ -7,6 +7,7 @@
 #include "Classes/Components/SplineComponent.h"
 #include "Classes/Curves/CurveFloat.h"
 
+#include "Telekom_SC360.h"
 #include "TrafficCar.h"
 
 #include "TrafficRoad.generated.h"
@@ -46,6 +47,8 @@ public:
 	/**The current cars taking the path*/
 	UPROPERTY(BlueprintReadWrite)
 		TArray<ATrafficCar*> currentCars;
+	UPROPERTY(BlueprintReadOnly)
+		TArray<ATrafficCar*> removeList;
 	/**The length of the road (in uu)*/
 	UPROPERTY(BlueprintReadWrite)
 		float length;
@@ -59,21 +62,21 @@ public:
 		virtual void AddCar(ATrafficCar* newCar);
 	/**Called when a car has reached the end of the path, and the path has child paths*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Road")
-		void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad);
+		virtual void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad);
+
+
 	/**Gets the shortest route to the given path (using A*)*/
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Road")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Road")
 		TArray<ATrafficRoad*> GetPathTo(ATrafficRoad* goal);
 	/**Gets the distance between the middle point of this road, and the middle point of another one*/
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Road")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Road")
 		float GetMinDistanceToRoad(ATrafficRoad* other);
 	/**Gets the Distance between the middle point of this road, and an actor*/
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Road")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Road")
 		float GetMinDistanceToActor(AActor* other);
 	/**Gets the Distance between the middle point of this road, and a specified world location*/
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Road", meta = (DisplayName = "GetMinDistanceTo"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Road", meta = (DisplayName = "GetMinDistanceTo"))
 		float GetMinDistanceToLocation(FVector pos);
-
-
 	/**Returns the car with the specified uniqueID, or nullptr if there's no such car on the road*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Road")
 		ATrafficCar* GetCarByID(int carID);
