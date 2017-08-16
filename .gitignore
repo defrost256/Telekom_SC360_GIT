@@ -12,3 +12,4 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+Binaries/Win64/UE4Editor.modules
