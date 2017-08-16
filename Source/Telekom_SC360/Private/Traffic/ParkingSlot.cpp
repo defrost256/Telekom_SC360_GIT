@@ -28,7 +28,7 @@ void AParkingSlot::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
 	currentCars[0] = nullptr;
 	parent->AddCarFromSlot(car);
 	state = EParkingState::None;
-	UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *parent->GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *parent->GetName());
 }
 
 void AParkingSlot::AddCar(ATrafficCar * newCar)
@@ -42,7 +42,7 @@ void AParkingSlot::AddCar(ATrafficCar * newCar)
 	state = EParkingState::Arriving;
 	currentCars[0] = newCar;
 	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance));
-	UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
 }
 
 bool AParkingSlot::IsLeaf()
@@ -100,7 +100,7 @@ void AParkingSlot::DetachCar(ATrafficCar * car)
 {
 	if (!HasCar())
 		return;
-	UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *currentCars[0]->GetName(), *GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *currentCars[0]->GetName(), *GetName());
 	currentCars[0] = nullptr;
 	state = EParkingState::None;
 }
