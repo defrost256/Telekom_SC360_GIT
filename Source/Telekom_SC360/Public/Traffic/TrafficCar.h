@@ -39,7 +39,10 @@ public:
 		float accelerationLerpSpeed;
 	/**The speed at which the car decelerates when it detects an obstacle(uu/s^2)*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float decelerationLerpSpeed;
+		float emergencyerpSpeed;
+	/**The speed at which the car decelerates when it detects an obstacle(uu/s^2)*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float slowdownLerpSpeed;
 	/**A multiplier applied to the road speed to determine the max speed of the car*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float speedMultiplier;
@@ -78,6 +81,12 @@ public:
 		ATrafficRoad* road;
 	UPROPERTY(BlueprintReadWrite)
 		ESensorDirection activeDirection;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float frontSideAngle;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float sideAngle;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float rearAngle;
 	/**The distance of the car along the current path*/
 	UPROPERTY(BlueprintReadWrite)
 		float time;
@@ -90,6 +99,8 @@ public:
 	/**The speed the car is trying to achieve (in uu/s) (this is affected by the speed limit, and speed curve of the road)*/
 	UPROPERTY(BlueprintReadWrite)
 		float targetSpeed;
+	UPROPERTY(BlueprintReadWrite)
+		float DeltaYaw;
 	/**The number of cars currently in the sensing area of this car*/
 	UPROPERTY(BlueprintReadWrite)
 		int emergencyOverlap;
@@ -168,6 +179,8 @@ public:
 		UBoxComponent* GetSensorByDirection(ESensorDirection dir);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void ChangeSensorDirection(ESensorDirection newDirection);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Car")
+		FString GetSensorDirectionName(ESensorDirection dir);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		UBoxComponent* GetCurrentSensor();
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")

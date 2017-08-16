@@ -49,7 +49,7 @@ void ATrafficRoad::AddCar(ATrafficCar * newCar)
 {
 	currentCars.Add(newCar);
 	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance));
-	UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
 }
 
 void ATrafficRoad::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
@@ -75,7 +75,7 @@ void ATrafficRoad::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
 	if (selectedRoad == nullptr)
 		selectedRoad = childRoads[childRoads.Num() - 1];
 	selectedRoad->AddCar(car);
-	UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *selectedRoad->GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *selectedRoad->GetName());
 
 }
 
@@ -184,7 +184,7 @@ void ATrafficRoad::FTrafficTick(float DeltaT)
 void ATrafficRoad::DetachCar(ATrafficCar * car)
 {
 	currentCars.Remove(car);
-	UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *car->GetName(), *GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *car->GetName(), *GetName());
 
 }
 

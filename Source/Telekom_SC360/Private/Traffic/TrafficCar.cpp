@@ -59,6 +59,8 @@ void ATrafficCar::BeginPlay()
 
 	EmergencySensor->OnComponentBeginOverlap.AddDynamic(this, &ATrafficCar::OnEmergencySensorBeginOverlap);
 	EmergencySensor->OnComponentEndOverlap.AddDynamic(this, &ATrafficCar::OnEmergencySensorEndOverlap);
+
+	ChangeSensorDirection(ESensorDirection::Front);
 }
 
 // Called every frame
@@ -160,11 +162,11 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	{
 		if (targetSpeed * slowdownMultiplier > GetAvgSpeedOfOverlapCars())
 		{
-			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 0.0f, DeltaT);
+			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 0.0f, FMath::Clamp(DeltaT * slowdownLerpSpeed, 0.0f, 1.0f));
 		}
 		else
 		{
-			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 1.0f, DeltaT);
+			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 1.0f, FMath::Clamp(DeltaT * accelerationLerpSpeed, 0.0f, 1.0f));
 		}
 		targetSpeed = targetSpeed * slowdownMultiplier;
 	}
@@ -180,7 +182,7 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 		forcedStopTime += DeltaT;
 		if (forcedStopTime > forcedStopLimit)
 			ResolveDeadlock();
-		speed = FMath::Lerp(speed, (float)0, FMath::Clamp(DeltaT * decelerationLerpSpeed, 0.0f, 1.0f));
+		speed = FMath::Lerp(speed, (float)0, FMath::Clamp(DeltaT * emergencyerpSpeed, 0.0f, 1.0f));
 	}
 
 	//Compute time
@@ -190,8 +192,8 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	FTransform nextTransform = road->GetTransformAtTime(time, ESplineCoordinateSpace::World, ID);
 
 	//Decide sensor direction
-	float DeltaYaw = nextTransform.Rotator().Yaw - GetActorRotation().Yaw;
-	if (FMath::Abs(DeltaYaw) > 120)
+	DeltaYaw = (nextTransform.Rotator().Yaw - GetActorRotation().Yaw) / DeltaT;
+	if (FMath::Abs(DeltaYaw) > rearAngle)
 	{
 		ChangeSensorDirection(ESensorDirection::Rear);
 	}
@@ -199,18 +201,18 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	{
 		if (DeltaYaw > 0)
 		{
-			if (DeltaYaw > 60)
+			if (DeltaYaw > sideAngle)
 				ChangeSensorDirection(ESensorDirection::Right);
-			else if (DeltaYaw > 30)
+			else if (DeltaYaw > frontSideAngle)
 				ChangeSensorDirection(ESensorDirection::FrontRight);
 			else
 				ChangeSensorDirection(ESensorDirection::Front);
 		}
 		else
 		{
-			if (DeltaYaw < -60)
+			if (DeltaYaw < -sideAngle)
 				ChangeSensorDirection(ESensorDirection::Left);
-			else if (DeltaYaw < -30)
+			else if (DeltaYaw < -frontSideAngle)
 				ChangeSensorDirection(ESensorDirection::FrontLeft);
 			else
 				ChangeSensorDirection(ESensorDirection::Front);
@@ -291,8 +293,7 @@ bool ATrafficCar::ResolveDeadlock()
 			tmpCar = Cast<ATrafficCar>(a);
 			if (deadlockCars.Contains(tmpCar))
 			{
-				tmpCar->road->DetachCar(tmpCar);
-				tmpCar->emitter->CarFinished(tmpCar);
+				Kill();
 				return true;
 			}
 			deadlockCars.Add(tmpCar);
@@ -334,7 +335,30 @@ void ATrafficCar::ChangeSensorDirection(ESensorDirection newDirection)
 		return;
 	GetSensorByDirection(activeDirection)->bGenerateOverlapEvents = false;
 	GetSensorByDirection(newDirection)->bGenerateOverlapEvents = true;
+	activeDirection = newDirection;
 	overlapCount = 0;
+}
+
+FString ATrafficCar::GetSensorDirectionName(ESensorDirection dir)
+{
+	switch (dir)
+	{
+	case ESensorDirection::Front:
+		return TEXT("Front");
+	case ESensorDirection::FrontRight:
+		return TEXT("FrontRight");
+	case ESensorDirection::FrontLeft:
+		return TEXT("FrontLeft");
+	case ESensorDirection::Right:
+		return TEXT("Right");
+	case ESensorDirection::Left:
+		return TEXT("Left");
+	case ESensorDirection::Rear:
+		return TEXT("Rear");
+	default:
+		return TEXT("N/A");
+	}
+	return TEXT("N/A");
 }
 
 UBoxComponent * ATrafficCar::GetCurrentSensor()
@@ -358,8 +382,8 @@ float ATrafficCar::GetAvgSpeedOfOverlapCars()
 			cars++;
 		}
 	}
-	if (cars != overlapCount)
-		UE_LOG(TrafficLog, Log, TEXT("ERROR - overlapped car count doesn't match ATrafficCar::overlapCount"));
+	/*if (cars != overlapCount)
+		UE_LOG(TrafficLog, Log, TEXT("ERROR - overlapped car count doesn't match ATrafficCar::overlapCount"));*/
 	return acc / cars;
 }
 

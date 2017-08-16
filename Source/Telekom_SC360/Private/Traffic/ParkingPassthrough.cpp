@@ -11,7 +11,7 @@ void AParkingPassthrough::AssignSlot(int slot, ATrafficCar* car)
 {
 	assignedSlots.Add(car->GetUniqueID(), slot);
 	assignedFlags |= ((uint64)1 << slot);
-	UE_LOG(TrafficLog, Log, TEXT("ASSIGNED slot %d to %s"), slot, *car->GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("ASSIGNED slot %d to %s"), slot, *car->GetName());
 }
 
 void AParkingPassthrough::FreeSlot(int slot)
@@ -19,7 +19,7 @@ void AParkingPassthrough::FreeSlot(int slot)
 	assignedFlags &= !((uint64)1 << slot);
 	parkingSlots[slot]->DetachCar(nullptr);
 	assignedSlots.Remove(*assignedSlots.FindKey(slot));
-	UE_LOG(TrafficLog, Log, TEXT("FREE slot %d"), slot);
+	//UE_LOG(TrafficLog, Log, TEXT("FREE slot %d"), slot);
 }
 
 TArray<int> AParkingPassthrough::GetAssignedSlots()
@@ -68,11 +68,16 @@ void AParkingPassthrough::AddCarFromSlot(ATrafficCar * newCar)
 	currentCars.Add(newCar);
 	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance), parkingSlots[assignedSlots[newCar->GetUniqueID()]]->carStartTime);
 	FreeSlot(assignedSlots[newCar->GetUniqueID()]);
-	UE_LOG(TrafficLog, Log, TEXT("ADD %s from slot to %s"), *newCar->GetName(), *GetName());
+	//UE_LOG(TrafficLog, Log, TEXT("ADD %s from slot to %s"), *newCar->GetName(), *GetName());
 }
 
 void AParkingPassthrough::AddCar(ATrafficCar * newCar)
 {
+	if (currentCars.Contains(newCar))
+	{
+		UE_LOG(TrafficLog, Log, TEXT("ERROR - Car already in current cars"));
+		return;
+	}
 	Super::AddCar(newCar);
 	TArray<int> freeSlots = GetFreeSlots();
 	if (freeSlots.Num() == 0)
