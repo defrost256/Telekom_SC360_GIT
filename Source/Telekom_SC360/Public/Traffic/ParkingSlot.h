@@ -6,9 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "Classes/Components/BillboardComponent.h"
 
+#include "TrafficRoad.h"
+#include "ParkingPassthrough.h"
 #include "Traffic/TrafficCar.h"
 
 #include "ParkingSlot.generated.h"
+
+class AParkingPassthrough;
 
 UENUM(BlueprintType)
 enum class EParkingState : uint8
@@ -20,56 +24,63 @@ enum class EParkingState : uint8
 };
 
 UCLASS()
-class TELEKOM_SC360_API AParkingSlot : public AActor
+class TELEKOM_SC360_API AParkingSlot : public ATrafficRoad
 {
 	GENERATED_BODY()
 public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		USplineComponent* entrySpline;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		USplineComponent* exitSpline;
+	
+	/**The billboard component for easy handling*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UBillboardComponent* billboard;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		UCurveFloat* exitSpeedCurve;
+	UPROPERTY(BlueprintReadOnly)
+		AParkingPassthrough* parent;
+	/**Sets if the spline should fit the ParkingPassthrough location and tangent or not (at BeginPlay?)*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		bool bAutoSpline;
-	UPROPERTY(BlueprintReadWrite)
-		ATrafficCar* currentCar;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float parkTime;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float parkTimeVariance;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float carGrabDistance = 10;
+	/**The distancealongetime of the  the car entered the */
 	UPROPERTY(BlueprintReadWrite)
 		float carStartTime;
 	UPROPERTY(BlueprintReadWrite)
-		float entryTime;
-	UPROPERTY(BlueprintReadWrite)
 		EParkingState state;
+
 
 public:	
 
 	// Sets default values for this actor's properties
 	AParkingSlot();
 
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		bool CanCarStartParking();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
+		bool CanCarStartParking(FVector position);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
 		bool IsCarCloseEnough();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		bool HasCar();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		bool CanCarExit();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		bool ParkCar(float time);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|PSlot")
+		bool HasCar();	
 
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		FTransform GetTransformAtTime(float time, ESplineCoordinateSpace::Type coordinateSpace);
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		bool SetCar(ATrafficCar* car, float time);
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		ATrafficCar* RemoveCar();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|PSlot")
-		float GetDesiredSpeed(float time);
+	virtual void CarFinished(ATrafficCar* car, ATrafficRoad* forcedRoad) override;
+	virtual void AddCar(ATrafficCar* newCar) override;
+	virtual bool IsLeaf() override;
+	virtual FTransform GetTransformAtTime(float time, ESplineCoordinateSpace::Type splineCoordinateSpaceType, int carID) override;
+	virtual float GetDesiredSpeed(float time, int carID) override;
+	virtual bool CanLeaveRoad(float time, int carID) override;
+	
+	virtual void FTrafficTick(float DeltaT);
+	virtual void DetachCar(ATrafficCar* car);
+
+	void Initialize_Implementation() override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	bool bCarFlag;
 
 public:	
 	// Called every frame

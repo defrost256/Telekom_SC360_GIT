@@ -3,6 +3,28 @@
 #include "TrafficProbe.h"
 
 
+FVector4 ATrafficProbe::FindLocationAndDistanceAlongSplineNearLocation(USplineComponent* spline, FVector loc, float precision)
+{
+	float l = spline->GetSplineLength();
+	float inc = l / 4;
+	float d = l / 2;
+	float targetKey = spline->FindInputKeyClosestToWorldLocation(loc);
+	while (FMath::Abs(inc) > precision)
+	{
+		float currentKey = spline->GetInputKeyAtDistanceAlongSpline(d);
+		if (currentKey < targetKey)
+		{
+			d += inc;
+		}
+		else if(currentKey > targetKey)
+		{
+			d -= inc;
+		}
+		inc /= 2;
+	}
+	return FVector4(spline->GetLocationAtSplineInputKey(targetKey, ESplineCoordinateSpace::World), d);
+}
+
 // Sets default values
 ATrafficProbe::ATrafficProbe()
 {
@@ -13,7 +35,7 @@ ATrafficProbe::ATrafficProbe()
 
 ATrafficProbe::ATrafficProbe(const FObjectInitializer & ObjectInitializer)
 	:Super(ObjectInitializer),
-	bDebugRoadTime(false),
+	bDebugSpeedCurve(false),
 	bAutoTargetRoad(false),
 	targetRoad(nullptr)
 {
@@ -79,7 +101,7 @@ void ATrafficProbe::PostLoad()
 #if WITH_EDITOR
 void ATrafficProbe::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEvent)
 {
-	static const FName NAME_DebugRoadTime = GET_MEMBER_NAME_CHECKED(ATrafficProbe, bDebugRoadTime);
+	static const FName NAME_DebugRoadTime = GET_MEMBER_NAME_CHECKED(ATrafficProbe, bDebugSpeedCurve);
 	static const FName NAME_AutoTargetRoad = GET_MEMBER_NAME_CHECKED(ATrafficProbe, bAutoTargetRoad);
 	static const FName NAME_TargetRoad = GET_MEMBER_NAME_CHECKED(ATrafficProbe, targetRoad);
 	static const FName NAME_VisibleInGame = GET_MEMBER_NAME_CHECKED(ATrafficProbe, bVisibleInGame);
@@ -89,18 +111,18 @@ void ATrafficProbe::PostEditChangeProperty(FPropertyChangedEvent & PropertyChang
 		const FName PropName = PropertyChangedEvent.MemberProperty->GetFName();
 		if (PropName == NAME_DebugRoadTime)
 		{
-			if (bDebugRoadTime)
+			if (bDebugSpeedCurve)
 			{
 				RunQueries();
 			}
 			UpdateDrawing();
 		}
-		else if (PropName == NAME_AutoTargetRoad && bDebugRoadTime)
+		else if (PropName == NAME_AutoTargetRoad && bDebugSpeedCurve)
 		{
 			RunQueries();
 			UpdateDrawing();
 		}
-		else if (PropName == NAME_TargetRoad && bDebugRoadTime && bAutoTargetRoad)
+		else if (PropName == NAME_TargetRoad && bDebugSpeedCurve && bAutoTargetRoad)
 		{
 			RunQueries();
 			UpdateDrawing();
@@ -124,11 +146,9 @@ void ATrafficProbe::PostEditMove(bool bFinished)
 }
 #endif // WITH_EDITOR
 
-FTrafficData ATrafficProbe::GetTrafficData()
+const FTrafficData* ATrafficProbe::GetTrafficData() const
 {
-	// TODO: insert return statement here
-	return FTrafficData();
-	
+	return &currentData;	
 }
 
 void ATrafficProbe::RunQueries()
@@ -136,7 +156,8 @@ void ATrafficProbe::RunQueries()
 	FTrafficData newData;
 	UWorld* World = GetWorld();
 	ATrafficRoad* nearestRoad = GetNearestRoad();
-	if (bDebugRoadTime)
+	FVector Me = GetActorLocation();
+	if (bDebugSpeedCurve)
 	{
 		TArray<UActorComponent*> splineComps;
 		if (bAutoTargetRoad)
@@ -151,11 +172,13 @@ void ATrafficProbe::RunQueries()
 		}
 		for (UActorComponent* splineComp : splineComps)
 		{
-			//TODO I'M SOOOO TIRED
-			return;
+			USplineComponent* spline = Cast<USplineComponent>(splineComp);
+			FVector4 locAndDist = FindLocationAndDistanceAlongSplineNearLocation(spline, Me);
+			newData.AddDebugTimeData(locAndDist, locAndDist.W, (bAutoTargetRoad ? nearestRoad->GetDesiredSpeed(locAndDist.W, -1) : 0));
 		}
-
 	}
+
+	currentData = newData;
 }
 
 void ATrafficProbe::UpdateDrawing()

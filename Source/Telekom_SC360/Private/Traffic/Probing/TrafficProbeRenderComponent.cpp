@@ -71,9 +71,17 @@ FTrafficDebugRenderSceneProxy::FTrafficDebugRenderSceneProxy(const UPrimitiveCom
 	Texts = InTexts;
 	
 	const UTrafficProbeRenderComponent* renderComp = Cast<const UTrafficProbeRenderComponent>(&InComponent);
+	
 	ActorOwner = InComponent.GetOwner();
-
-	//TODO Query init
+	DataSource = Cast<const ITrafficDataCollectorInterface>(DataSource);
+	if (!DataSource)
+	{
+		DataSource = Cast<const ITrafficDataCollectorInterface>(&InComponent);
+	}
+	if (Lines.Num() == 0 && Texts.Num() == 0 && DataSource)
+	{
+		CollectData();
+	}
 }
 
 FPrimitiveViewRelevance FTrafficDebugRenderSceneProxy::GetViewRelevance(const FSceneView * View) const
@@ -83,4 +91,23 @@ FPrimitiveViewRelevance FTrafficDebugRenderSceneProxy::GetViewRelevance(const FS
 	ret.bDynamicRelevance = true;
 	ret.bSeparateTranslucencyRelevance = ret.bNormalTranslucencyRelevance = IsShown(View);
 	return ret;
+}
+
+void FTrafficDebugRenderSceneProxy::CollectData()
+{
+	if (DataSource == nullptr)
+		return;
+
+	const FTrafficData* data = DataSource->GetTrafficData();
+	FVector ownerLoc = ActorOwner->GetActorLocation();
+	FVector pointOfInterest;
+	FColor color;
+
+	for (int i = 0; i < data->DataCount_DebugTime; i++)
+	{
+		pointOfInterest = data->Location_SpeedCurve[i];
+		color = data->Color_SpeedCurve;
+		Lines.Add(FDebugLine(ownerLoc, pointOfInterest, color));
+		Texts.Add(FText3d(FString::Printf(TEXT("%.3f -> %.5f"), data->Time_SpeedCurve[i], data->Speed_SpeedCurve[i]), pointOfInterest + FVector(0, 0, 50), color));
+	}
 }

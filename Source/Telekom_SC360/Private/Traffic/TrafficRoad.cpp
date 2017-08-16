@@ -6,7 +6,7 @@
 ATrafficRoad::ATrafficRoad()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	spline = CreateDefaultSubobject<USplineComponent>(TEXT("Spline"));
 	spline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
@@ -49,12 +49,15 @@ void ATrafficRoad::AddCar(ATrafficCar * newCar)
 {
 	currentCars.Add(newCar);
 	newCar->PutOnRoad(this, baseSpeed + FMath::RandRange(-speedVariance, speedVariance));
+	//UE_LOG(TrafficLog, Log, TEXT("ADD %s to %s"), *newCar->GetName(), *GetName());
 }
 
 void ATrafficRoad::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
 {
 	OnCarFinished(car, forcedRoad);
-	currentCars.Remove(car);
+	removeList.Add(car);
+	if (childRoads.Num() == 0)
+		return;
 	ATrafficRoad* selectedRoad = nullptr;
 	if (forcedRoad == nullptr)
 	{
@@ -72,6 +75,8 @@ void ATrafficRoad::CarFinished(ATrafficCar * car, ATrafficRoad * forcedRoad)
 	if (selectedRoad == nullptr)
 		selectedRoad = childRoads[childRoads.Num() - 1];
 	selectedRoad->AddCar(car);
+	//UE_LOG(TrafficLog, Log, TEXT("FINISHED Car %s (selected road: %s)"), *car->GetName(), *selectedRoad->GetName());
+
 }
 
 TArray<ATrafficRoad*> ATrafficRoad::GetPathTo(ATrafficRoad * goal)
@@ -153,7 +158,7 @@ FTransform ATrafficRoad::GetTransformAtTime(float time, ESplineCoordinateSpace::
 
 float ATrafficRoad::GetDesiredSpeed(float time, int carID)
 {
-	return (speedCurve == nullptr ? 1 : speedCurve->GetFloatValue(time)) * baseSpeed;
+	return (speedCurve == nullptr ? 1 : speedCurve->GetFloatValue(time));
 }
 
 bool ATrafficRoad::CanLeaveRoad(float time, int carID)
@@ -168,12 +173,19 @@ void ATrafficRoad::FTrafficTick(float DeltaT)
 	{
 		car->FTrafficTick(DeltaT);
 	}
+	for (ATrafficCar* removeCar : removeList)
+	{
+		currentCars.Remove(removeCar);
+	}
+	removeList.Empty();
 	AfterTrafficTick(DeltaT);
 }
 
 void ATrafficRoad::DetachCar(ATrafficCar * car)
 {
 	currentCars.Remove(car);
+	//UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *car->GetName(), *GetName());
+
 }
 
 void ATrafficRoad::Initialize_Implementation()
