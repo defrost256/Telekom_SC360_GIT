@@ -2,6 +2,10 @@
 
 #include "TrafficHelper.h"
 
+DEFINE_STAT(STAT_TrafficTick);
+DEFINE_STAT(STAT_CollisionQueries);
+DEFINE_STAT(STAT_CarCounter);
+
 TrafficHelper::TrafficHelper()
 {
 }

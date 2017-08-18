@@ -158,17 +158,24 @@ public:
 	/**Assigns the road to the car, resets time, and sets the baseSpeed*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void PutOnRoad(ATrafficRoad* newRoad, float roadSpeed, float _time = 0);
+
 	/**Called every traffic frame, when the car is running (active)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void FTrafficTick(float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void OnSensorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+		bool TickPause(float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void OnSensorEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+		void TickTrafficSlowdown(float& _targetSpeed, float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void OnEmergencySensorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+		void TickObstructed(float _targetSpeed, float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void OnEmergencySensorEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+		void TickSensorDirection(FTransform nextTransform, float DeltaT);
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		void TickEndOfTheRoad(int ID);
 
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		bool ResolveDeadlock();

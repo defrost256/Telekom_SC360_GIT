@@ -85,6 +85,7 @@ bool ATrafficCar::IsStopped(float tolerance)
 
 void ATrafficCar::Despawn()
 {
+	SCOPE_CYCLE_COUNTER(STAT_CollisionQueries);
 	SetActorHiddenInGame(true);
 	const TArray<FOverlapInfo> OverlapInfoCopy(sensedArea->GetOverlapInfos());
 	for (const FOverlapInfo OtherOverlap : OverlapInfoCopy)
@@ -133,27 +134,12 @@ void ATrafficCar::PutOnRoad(ATrafficRoad * newRoad, float roadSpeed, float _time
 //------------------------------------------------------------------
 void ATrafficCar::FTrafficTick(float DeltaT)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Traffic Tick"), STAT_CarTrafficTick, STATGROUP_TrafficSystem);
 	BeforeTrafficTick(DeltaT);
 
 	// Paused
-	if (paused)
-	{
-		if (pauseLimit > 0)
-		{
-			if (pauseTime < pauseLimit)
-			{
-				pauseTime += DeltaT;
-				return;
-			}
-			UnpauseCar();
-		}
-		else if (pauseLimit == 0)
-		{
-			UnpauseCar();
-			return;
-		}
-		else return;
-	}
+	if (TickPause(DeltaT))
+		return;
 	
 	int ID = GetUniqueID();
 
@@ -161,7 +147,56 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 	targetSpeed = road->GetDesiredSpeed(time, ID) * maxSpeed;
 
 	//Traffic slowdown
-	if (overlapCount > 0)
+	TickTrafficSlowdown(targetSpeed, DeltaT);
+
+	//Is obstructed
+	TickObstructed(targetSpeed, DeltaT);
+
+	//Compute time
+	time += DeltaT * speed;
+
+	//Get new WorldTransform
+	FTransform nextTransform = road->GetTransformAtTime(time, ESplineCoordinateSpace::World, ID);
+
+	//Decide sensor direction
+	TickSensorDirection(nextTransform, DeltaT);
+
+	//Set WorldTransform
+	SetWorldTransformNoScale(nextTransform);
+
+	//End of the road
+	TickEndOfTheRoad(ID);
+	
+	AfterTrafficTick(DeltaT);
+}
+
+bool ATrafficCar::TickPause(float DeltaT)
+{
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Paused"), STAT_CarTick_Paused, STATGROUP_TrafficSystem);
+	if (paused)
+	{
+		if (pauseLimit > 0)
+		{
+			if (pauseTime < pauseLimit)
+			{
+				pauseTime += DeltaT;
+				return true;
+			}
+			UnpauseCar();
+		}
+		else if (pauseLimit == 0)
+		{
+			UnpauseCar();
+			return true;
+		}
+		else return true;
+	}
+	return false;
+}
+void ATrafficCar::TickTrafficSlowdown(float & _targetSpeed, float DeltaT)
+{
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Traffic Slowdown"), STAT_CarTick_TrafficSlowdown, STATGROUP_TrafficSystem);
+	if (SensorArray->IsOverlapping())
 	{
 		if (targetSpeed * slowdownMultiplier > GetAvgSpeedOfOverlapCars())
 		{
@@ -171,14 +206,16 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 		{
 			slowdownMultiplier = FMath::Lerp(slowdownMultiplier, 1.0f, FMath::Clamp(DeltaT * accelerationLerpSpeed, 0.0f, 1.0f));
 		}
-		targetSpeed = targetSpeed * slowdownMultiplier;
+		_targetSpeed = _targetSpeed * slowdownMultiplier;
 	}
-
-	//Is obstructed
+}
+void ATrafficCar::TickObstructed(float _targetSpeed, float DeltaT)
+{
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Obstructed"), STAT_CarTickObstructed, STATGROUP_TrafficSystem);
 	if (freePath)
 	{
 		forcedStopTime = 0;
-		speed = FMath::Lerp(speed, targetSpeed, FMath::Clamp(DeltaT * accelerationLerpSpeed, 0.0f, 1.0f));
+		speed = FMath::Lerp(speed, _targetSpeed, FMath::Clamp(DeltaT * accelerationLerpSpeed, 0.0f, 1.0f));
 	}
 	else
 	{
@@ -187,14 +224,10 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 			ResolveDeadlock();
 		speed = FMath::Lerp(speed, (float)0, FMath::Clamp(DeltaT * emergencyerpSpeed, 0.0f, 1.0f));
 	}
-
-	//Compute time
-	time += DeltaT * speed;
-
-	//Get new WorldTransform
-	FTransform nextTransform = road->GetTransformAtTime(time, ESplineCoordinateSpace::World, ID);
-
-	//Decide sensor direction
+}
+void ATrafficCar::TickSensorDirection(FTransform nextTransform, float DeltaT)
+{
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Sensor Direction"), STAT_CarTick_SensorDirection, STATGROUP_TrafficSystem);
 	DeltaYaw = (nextTransform.Rotator().Yaw - GetActorRotation().Yaw) / DeltaT;
 	if (FMath::Abs(DeltaYaw) > rearAngle)
 	{
@@ -221,11 +254,10 @@ void ATrafficCar::FTrafficTick(float DeltaT)
 				ChangeSensorDirection(ESensorDirection::Front);
 		}
 	}
-
-	//Set WorldTransform
-	SetWorldTransformNoScale(nextTransform);
-
-	//End of the road
+}
+void ATrafficCar::TickEndOfTheRoad(int ID)
+{
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick End of the Road"), STAT_CarTick_EndOfTheRoad, STATGROUP_TrafficSystem);
 	if (road->CanLeaveRoad(time, ID))
 	{
 		if (road->IsLeaf())
@@ -284,6 +316,7 @@ void ATrafficCar::OnEmergencySensorEndOverlap(UPrimitiveComponent * OverlappedCo
 
 bool ATrafficCar::ResolveDeadlock()
 {
+	SCOPE_CYCLE_COUNTER(STAT_CollisionQueries);
 	TArray<ATrafficCar*> deadlockCars;
 	TArray<AActor*> tempOverlaps;
 	ATrafficCar* tmpCar;

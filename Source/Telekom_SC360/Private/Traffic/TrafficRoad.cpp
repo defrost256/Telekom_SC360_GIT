@@ -168,6 +168,7 @@ bool ATrafficRoad::CanLeaveRoad(float time, int carID)
 
 void ATrafficRoad::FTrafficTick(float DeltaT)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Road Traffic Tick"), STAT_RoadTrafficTick, STATGROUP_TrafficSystem);
 	BeforeTrafficTick(DeltaT);
 	for (ATrafficCar* car : currentCars)
 	{
