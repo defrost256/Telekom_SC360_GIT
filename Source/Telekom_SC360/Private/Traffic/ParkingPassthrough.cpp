@@ -145,7 +145,7 @@ void AParkingPassthrough::FTrafficTick(float DeltaT)
 	}
 	for (ATrafficCar* removeCar : removeList)
 	{
-		currentCars.Remove(removeCar);
+		currentCars.RemoveSingleSwap(removeCar);
 	}
 	removeList.Empty();
 	for (AParkingSlot* slot : parkingSlots)

@@ -41,7 +41,7 @@ void ATrafficEmitter::SpawnCar()
 	if (HasReserves())
 	{
 		randomCar = carsReserve[FMath::RandRange(0, carsReserve.Num() - 1)];
-		carsReserve.Remove(randomCar);
+		carsReserve.RemoveSingleSwap(randomCar);
 	}
 	else
 	{
@@ -67,7 +67,7 @@ FTransform ATrafficEmitter::GetStartTransform()
 
 void ATrafficEmitter::CarFinished(ATrafficCar * car)
 {
-	carsActive.Remove(car);
+	carsActive.RemoveSingleSwap(car);
 	car->Despawn();
 	carsReserve.Add(car);
 }

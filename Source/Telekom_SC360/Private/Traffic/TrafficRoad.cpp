@@ -176,7 +176,7 @@ void ATrafficRoad::FTrafficTick(float DeltaT)
 	}
 	for (ATrafficCar* removeCar : removeList)
 	{
-		currentCars.Remove(removeCar);
+		currentCars.RemoveSingleSwap(removeCar);
 	}
 	removeList.Empty();
 	AfterTrafficTick(DeltaT);
@@ -184,7 +184,7 @@ void ATrafficRoad::FTrafficTick(float DeltaT)
 
 void ATrafficRoad::DetachCar(ATrafficCar * car)
 {
-	currentCars.Remove(car);
+	currentCars.RemoveSingleSwap(car);
 	//UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *car->GetName(), *GetName());
 
 }
