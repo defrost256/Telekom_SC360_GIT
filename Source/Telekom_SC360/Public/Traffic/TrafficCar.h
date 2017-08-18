@@ -7,7 +7,9 @@
 #include "GameFramework/Actor.h"
 #include "Public/DrawDebugHelpers.h"
 
+#include "CarSensorArray.h"
 #include "TrafficHelper.h"
+#include "ProxySensor.h"
 
 #include "TrafficCar.generated.h"
 
@@ -15,16 +17,6 @@ class ATrafficRoad;
 class ATrafficEmitter;
 class ACarSensorArray;
 
-UENUM(BlueprintType)
-enum class ESensorDirection : uint8
-{
-	Front,
-	FrontRight,
-	FrontLeft,
-	Right,
-	Left,
-	Rear
-};
 
 UCLASS()
 class TELEKOM_SC360_API ATrafficCar : public AActor
@@ -49,37 +41,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		bool debugDraw;
 
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* FrontSensor;
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* FrontRightSensor;
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* FrontLeftSensor;
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* LeftSensor;
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* RightSensor;
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* RearSensor;
-	/**The area where the car can sense other cars*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		UBoxComponent* EmergencySensor;
-
 	/**The area sensed by other cars*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UBoxComponent* sensedArea;
 
+	UPROPERTY(BlueprintReadWrite)
+		ACarSensorArray* SensorArray;
+
 	/**The path the car is currently on*/
 	UPROPERTY(BlueprintReadWrite)
 		ATrafficRoad* road;
-	UPROPERTY(BlueprintReadWrite)
-		ESensorDirection activeDirection;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float frontSideAngle;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -100,12 +71,7 @@ public:
 		float targetSpeed;
 	UPROPERTY(BlueprintReadWrite)
 		float DeltaYaw;
-	/**The number of cars currently in the sensing area of this car*/
-	UPROPERTY(BlueprintReadWrite)
-		int emergencyOverlap;
-	/**The number of cars currently in the sensing area of this car*/
-	UPROPERTY(BlueprintReadWrite)
-		int overlapCount;
+	
 	UPROPERTY(BlueprintReadWrite)
 		float slowdownMultiplier;
 	/**True if the car's path is unobstructed*/
@@ -163,34 +129,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void FTrafficTick(float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		void OnSensorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 		bool TickPause(float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		void OnSensorEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 		void TickTrafficSlowdown(float& _targetSpeed, float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		void OnEmergencySensorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 		void TickObstructed(float _targetSpeed, float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		void OnEmergencySensorEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 		void TickSensorDirection(FTransform nextTransform, float DeltaT);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void TickEndOfTheRoad(int ID);
 
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		void GetBlockingActors(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter = nullptr);
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		bool ResolveDeadlock();
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void Bump(float size = 0.0001f);
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Car")
-		UBoxComponent* GetSensorByDirection(ESensorDirection dir);
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		void ChangeSensorDirection(ESensorDirection newDirection);
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Traffic|Car")
-		FString GetSensorDirectionName(ESensorDirection dir);
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		UBoxComponent* GetCurrentSensor();
-	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		float GetAvgSpeedOfOverlapCars();
+
+
 
 	/**Called before every traffic frame*/
 	UFUNCTION(BlueprintImplementableEvent, Category = "Traffic|Car")
