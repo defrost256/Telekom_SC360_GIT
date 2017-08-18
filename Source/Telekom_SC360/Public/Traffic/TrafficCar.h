@@ -7,14 +7,13 @@
 #include "GameFramework/Actor.h"
 #include "Public/DrawDebugHelpers.h"
 
-#include "TrafficRoad.h"
-#include "TrafficEmitter.h"
 #include "TrafficHelper.h"
 
 #include "TrafficCar.generated.h"
 
 class ATrafficRoad;
 class ATrafficEmitter;
+class ACarSensorArray;
 
 UENUM(BlueprintType)
 enum class ESensorDirection : uint8

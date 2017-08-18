@@ -7,7 +7,6 @@
 #include "Classes/Components/BillboardComponent.h"
 
 #include "TrafficRoad.h"
-#include "ParkingPassthrough.h"
 #include "Traffic/TrafficCar.h"
 
 #include "ParkingSlot.generated.h"

@@ -2,6 +2,9 @@
 
 #include "../../Public/Traffic/TrafficCar.h"
 
+#include "TrafficRoad.h"
+#include "TrafficEmitter.h"
+
 // Sets default values
 ATrafficCar::ATrafficCar()
 {

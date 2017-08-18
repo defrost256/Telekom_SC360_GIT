@@ -2,6 +2,7 @@
 
 #include "ParkingSlot.h"
 
+#include "ParkingPassthrough.h"
 
 bool AParkingSlot::CanCarStartParking(FVector position)
 {
