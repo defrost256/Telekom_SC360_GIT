@@ -47,6 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
 		virtual bool IsOverlapping();
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
+		virtual bool IsProxy();
 
 	static FString GetSensorDirectionName(ESensorDirection dir);
 

@@ -6,37 +6,9 @@ AProxySensor::AProxySensor()
 {
 }
 
-float AProxySensor::GetAvgSpeedOfOverlapCars()
+bool AProxySensor::IsProxy()
 {
-	return 0.0f;
-}
-
-void AProxySensor::ChangeSensorDirection(ESensorDirection newDirection)
-{
-}
-
-void AProxySensor::GetOverlappingCars(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter)
-{
-}
-
-FString AProxySensor::GetCurrentSensorDirectionName()
-{
-	return FString();
-}
-
-bool AProxySensor::IsOverlapping()
-{
-	return false;
-}
-
-void AProxySensor::AssignCar(ATrafficCar * car)
-{
-	Super::AssignCar(car);
-}
-
-void AProxySensor::RemoveCar()
-{
-	Super::RemoveCar();
+	return true;
 }
 
 void AProxySensor::BeginPlay()

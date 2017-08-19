@@ -2,6 +2,8 @@
 
 #include "CarSensorArray.h"
 
+#include "TrafficCar.h"
+
 float ACarSensorArray::GetAvgSpeedOfOverlapCars()
 {
 	return 0.0f;
@@ -23,14 +25,23 @@ FString ACarSensorArray::GetCurrentSensorDirectionName()
 void ACarSensorArray::AssignCar(ATrafficCar * car)
 {
 	MyCar = car;
+	car->AssignSensor(this);
+	AttachToActor(car, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void ACarSensorArray::RemoveCar()
 {
+	MyCar->RemoveSensor();
+	DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 	MyCar = nullptr;
 }
 
 bool ACarSensorArray::IsOverlapping()
+{
+	return false;
+}
+
+bool ACarSensorArray::IsProxy()
 {
 	return false;
 }

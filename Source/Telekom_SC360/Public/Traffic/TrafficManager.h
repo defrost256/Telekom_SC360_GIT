@@ -7,6 +7,7 @@
 
 #include "TrafficEmitter.h"
 #include "TrafficRoad.h"
+#include "SensorPool.h"
 
 #include "TrafficManager.generated.h"
 
@@ -26,6 +27,12 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		TArray<ATrafficRoad*> roads;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		ASensorPool* sensorPool;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float sensorPoolUpdateRate;
+	UPROPERTY(BlueprintReadWrite)
+		float sensorPoolUpdateTime;
 	/**The emitters in the scene, which emit cars*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<ATrafficEmitter*> emitters;

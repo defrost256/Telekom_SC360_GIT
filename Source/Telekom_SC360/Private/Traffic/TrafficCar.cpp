@@ -88,6 +88,21 @@ void ATrafficCar::PutOnRoad(ATrafficRoad * newRoad, float roadSpeed, float _time
 	time = _time;
 }
 
+void ATrafficCar::AssignSensor(ACarSensorArray * sensor)
+{
+	SensorArray = sensor;
+}
+
+void ATrafficCar::RemoveSensor()
+{
+	SensorArray = nullptr;
+}
+
+ACarSensorArray * ATrafficCar::GetSensor()
+{
+	return SensorArray;
+}
+
 //------------------------------------------------------------------
 //------------------------ Traffic Tick ----------------------------
 //------------------------------------------------------------------

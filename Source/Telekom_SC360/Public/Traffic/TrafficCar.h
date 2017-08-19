@@ -124,6 +124,12 @@ public:
 	/**Assigns the road to the car, resets time, and sets the baseSpeed*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void PutOnRoad(ATrafficRoad* newRoad, float roadSpeed, float _time = 0);
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		void AssignSensor(ACarSensorArray* sensor);
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		void RemoveSensor();
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
+		ACarSensorArray* GetSensor();
 
 	/**Called every traffic frame, when the car is running (active)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")

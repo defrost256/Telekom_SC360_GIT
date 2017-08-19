@@ -51,6 +51,7 @@ void ATrafficEmitter::SpawnCar()
 		randomCar->emitter = this;
 	}
 	randomCar->Respawn(GetStartTransform());
+	sensorPool->AssignSensor(randomCar);
 	rootRoad->AddCar(randomCar);
 	carsActive.Add(randomCar);
 }
@@ -68,6 +69,7 @@ FTransform ATrafficEmitter::GetStartTransform()
 void ATrafficEmitter::CarFinished(ATrafficCar * car)
 {
 	carsActive.RemoveSingleSwap(car);
+	sensorPool->RevokeSensor(car);
 	car->Despawn();
 	carsReserve.Add(car);
 }

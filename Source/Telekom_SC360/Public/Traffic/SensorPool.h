@@ -7,6 +7,7 @@
 
 #include "CarSensorArray.h"
 #include "ProxySensor.h"
+#include "TrafficCar.h"
 
 #include "SensorPool.generated.h"
 
@@ -21,15 +22,26 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TSubclassOf<ACarSensorArray> SensorArrayClass;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TArray<FVector> criticalLocations;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float swapRadiusLow;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float swapRadiusHigh;
+
 
 	UPROPERTY(BlueprintReadOnly)
-		TArray<ACarSensorArray*> assignedCarSensors;
+		TArray<ACarSensorArray*> assignedSensors;
 	UPROPERTY(BlueprintReadOnly)
-		TArray<ACarSensorArray*> reservedCarSensors;
+		TArray<ACarSensorArray*> reservedSensors;
 	UPROPERTY(BlueprintReadOnly)
 		TArray<AProxySensor*> assignedProxies;
 	UPROPERTY(BlueprintReadOnly)
 		TArray<AProxySensor*> reservedProxies;
+	UPROPERTY(BlueprintReadOnly)
+		float swapRadiusLowSq;
+	UPROPERTY(BlueprintReadOnly)
+		float swapRadiusHighSq;
 
 protected:
 	// Called when the game starts or when spawned
@@ -40,9 +52,14 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensors")
-		void AssignSensor(ATrafficCar* car);
+		void AssignSensor(ATrafficCar* car, bool proxy = true);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensors")
-		void RevokeSensor(ACarSensorArray* sensor);
+		void RevokeSensor(ATrafficCar* car);
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensors")
+		void UpdateSensors();
 	
-	
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensors")
+		bool HasReserveProxies();
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensors")
+		bool HasReserveSensors();
 };

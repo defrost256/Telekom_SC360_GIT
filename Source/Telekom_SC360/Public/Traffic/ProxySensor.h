@@ -16,19 +16,13 @@ UCLASS()
 class TELEKOM_SC360_API AProxySensor : public ACarSensorArray
 {
 	GENERATED_BODY()
-	
+public:
 	// Sets default values for this actor's properties
 	AProxySensor();
 
 	//--------------------- ACarSensorArray implementation
 
-	virtual float GetAvgSpeedOfOverlapCars() override;
-	virtual void ChangeSensorDirection(ESensorDirection newDirection) override;
-	virtual void GetOverlappingCars(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter = nullptr) override;
-	virtual FString GetCurrentSensorDirectionName() override;
-	virtual bool IsOverlapping() override;
-	virtual void AssignCar(ATrafficCar* car) override;
-	virtual void RemoveCar() override;
+	virtual bool IsProxy() override;
 
 	//--------------------- ACarSensorArray END
 	
