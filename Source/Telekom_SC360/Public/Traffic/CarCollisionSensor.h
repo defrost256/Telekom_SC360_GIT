@@ -13,6 +13,18 @@
 
 class ATrafficCar;
 
+UENUM(BlueprintType)
+enum class ESensorDirection : uint8
+{
+	Front,
+	FrontRight,
+	FrontLeft,
+	Right,
+	Left,
+	Rear
+};
+
+
 UCLASS()
 class TELEKOM_SC360_API ACarCollisionSensor : public ACarSensorArray
 {
@@ -41,6 +53,13 @@ public:
 	/**The area where the car can sense other cars*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UBoxComponent* EmergencySensor;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float frontSideAngle;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float sideAngle;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float rearAngle;
 
 	/**The number of cars currently in the sensing area of this car*/
 	UPROPERTY(BlueprintReadWrite)
@@ -73,8 +92,7 @@ public:
 //--------------------- ACarSensorArray implementation
 
 	virtual float GetAvgSpeedOfOverlapCars() override;
-	virtual void ChangeSensorDirection(ESensorDirection newDirection) override;
-	virtual FString GetCurrentSensorDirectionName() override;
+	virtual void ChangeSensorDirection(float deltaYaw) override;
 	virtual void GetOverlappingCars(TSet<AActor*>& outActors, TSubclassOf<AActor> classFilter = nullptr, bool emergency = true) override;
 	virtual bool IsOverlapping() override;
 	virtual bool IsEmergency() override;

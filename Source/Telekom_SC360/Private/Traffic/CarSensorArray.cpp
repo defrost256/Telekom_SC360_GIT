@@ -9,17 +9,13 @@ float ACarSensorArray::GetAvgSpeedOfOverlapCars()
 	return 0.0f;
 }
 
-void ACarSensorArray::ChangeSensorDirection(ESensorDirection newDirection)
+void ACarSensorArray::ChangeSensorDirection(float delatYaw)
 {
+
 }
 
-void ACarSensorArray::GetOverlappingCars(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter)
+void ACarSensorArray::GetOverlappingCars(TSet<AActor*>& outActors, TSubclassOf<AActor> classFilter, bool emergency)
 {
-}
-
-FString ACarSensorArray::GetCurrentSensorDirectionName()
-{
-	return FString();
 }
 
 void ACarSensorArray::AssignCar(ATrafficCar * car)
@@ -41,31 +37,14 @@ bool ACarSensorArray::IsOverlapping()
 	return false;
 }
 
-bool ACarSensorArray::IsProxy()
+bool ACarSensorArray::IsEmergency()
 {
 	return false;
 }
 
-FString ACarSensorArray::GetSensorDirectionName(ESensorDirection dir)
+bool ACarSensorArray::IsProxy()
 {
-	switch (dir)
-	{
-	case ESensorDirection::Front:
-		return TEXT("Front");
-	case ESensorDirection::FrontRight:
-		return TEXT("FrontRight");
-	case ESensorDirection::FrontLeft:
-		return TEXT("FrontLeft");
-	case ESensorDirection::Right:
-		return TEXT("Right");
-	case ESensorDirection::Left:
-		return TEXT("Left");
-	case ESensorDirection::Rear:
-		return TEXT("Rear");
-	default:
-		return TEXT("N/A");
-	}
-	return TEXT("N/A");
+	return false;
 }
 
 // Sets default values

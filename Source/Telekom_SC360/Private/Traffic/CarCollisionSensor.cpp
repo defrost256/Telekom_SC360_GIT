@@ -129,8 +129,33 @@ float ACarCollisionSensor::GetAvgSpeedOfOverlapCars()
 	return acc / cars;
 }
 
-void ACarCollisionSensor::ChangeSensorDirection(ESensorDirection newDirection)
+void ACarCollisionSensor::ChangeSensorDirection(float deltaYaw)
 {
+	ESensorDirection newDirection = activeDirection;
+	if (FMath::Abs(deltaYaw) > rearAngle)
+		newDirection = ESensorDirection::Rear;
+	else
+	{
+		if (deltaYaw > 0)
+		{
+			if (deltaYaw > sideAngle)
+				newDirection = ESensorDirection::Right;
+			else if (deltaYaw > frontSideAngle)
+				newDirection = ESensorDirection::FrontRight;
+			else
+				newDirection = ESensorDirection::Front;
+		}
+		else
+		{
+			deltaYaw = -deltaYaw;
+			if (deltaYaw > sideAngle)
+				newDirection = ESensorDirection::Left;
+			else if (deltaYaw > frontSideAngle)
+				newDirection = ESensorDirection::FrontLeft;
+			else
+				newDirection = ESensorDirection::Front;
+		}
+	}
 	if (newDirection == activeDirection)
 		return;
 	GetSensorByDirection(activeDirection)->bGenerateOverlapEvents = false;
@@ -151,14 +176,14 @@ void ACarCollisionSensor::GetOverlappingCars(TSet<AActor*>& outActors, TSubclass
 	}
 }
 
-FString ACarCollisionSensor::GetCurrentSensorDirectionName()
-{
-	return GetSensorDirectionName(activeDirection);
-}
-
 bool ACarCollisionSensor::IsOverlapping()
 {
 	return overlapCount > 0;
+}
+
+bool ACarCollisionSensor::IsEmergency()
+{
+	return emergencyOverlap > 0;
 }
 
 void ACarCollisionSensor::AssignCar(ATrafficCar * car)
@@ -199,14 +224,12 @@ void ACarCollisionSensor::BeginPlay()
 	EmergencySensor->OnComponentBeginOverlap.AddDynamic(this, &ACarCollisionSensor::OnEmergencySensorBeginOverlap);
 	EmergencySensor->OnComponentEndOverlap.AddDynamic(this, &ACarCollisionSensor::OnEmergencySensorEndOverlap);
 
-	ChangeSensorDirection(ESensorDirection::Front);
+	ChangeSensorDirection(0);
 
 }
 
 // Called every frame
 void ACarCollisionSensor::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-
 }
 

@@ -51,12 +51,6 @@ public:
 	/**The path the car is currently on*/
 	UPROPERTY(BlueprintReadWrite)
 		ATrafficRoad* road;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float frontSideAngle;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float sideAngle;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		float rearAngle;
 	/**The distance of the car along the current path*/
 	UPROPERTY(BlueprintReadWrite)
 		float time;
@@ -74,9 +68,6 @@ public:
 	
 	UPROPERTY(BlueprintReadWrite)
 		float slowdownMultiplier;
-	/**True if the car's path is unobstructed*/
-	UPROPERTY(BlueprintReadWrite)
-		bool freePath;
 	/**True if the car is paused by the PauseCar method*/
 	UPROPERTY(BlueprintReadWrite)
 		bool paused;
@@ -129,7 +120,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
 		void RemoveSensor();
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")
-		ACarSensorArray* GetSensor();
+		ACarSensorArray* GetSensor();	
 
 	/**Called every traffic frame, when the car is running (active)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Car")

@@ -58,7 +58,6 @@ void ATrafficCar::Respawn(FTransform spawnPoint)
 	SetActorHiddenInGame(false);
 	sensedArea->bGenerateOverlapEvents = true;
 	forcedProgress = 1;
-	freePath = true;
 	SetWorldTransformNoScale(spawnPoint);
 }
 
@@ -205,31 +204,7 @@ void ATrafficCar::TickSensorDirection(FTransform nextTransform, float DeltaT)
 	if (!SensorArray)
 		return;
 	DeltaYaw = (nextTransform.Rotator().Yaw - GetActorRotation().Yaw) / DeltaT;
-	if (FMath::Abs(DeltaYaw) > rearAngle)
-	{
-		SensorArray->ChangeSensorDirection(ESensorDirection::Rear);
-	}
-	else
-	{
-		if (DeltaYaw > 0)
-		{
-			if (DeltaYaw > sideAngle)
-				SensorArray->ChangeSensorDirection(ESensorDirection::Right);
-			else if (DeltaYaw > frontSideAngle)
-				SensorArray->ChangeSensorDirection(ESensorDirection::FrontRight);
-			else
-				SensorArray->ChangeSensorDirection(ESensorDirection::Front);
-		}
-		else
-		{
-			if (DeltaYaw < -sideAngle)
-				SensorArray->ChangeSensorDirection(ESensorDirection::Left);
-			else if (DeltaYaw < -frontSideAngle)
-				SensorArray->ChangeSensorDirection(ESensorDirection::FrontLeft);
-			else
-				SensorArray->ChangeSensorDirection(ESensorDirection::Front);
-		}
-	}
+	SensorArray->ChangeSensorDirection(DeltaYaw);
 }
 void ATrafficCar::TickEndOfTheRoad(int ID)
 {
