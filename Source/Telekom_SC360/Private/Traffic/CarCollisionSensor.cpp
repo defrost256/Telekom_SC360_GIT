@@ -231,5 +231,6 @@ void ACarCollisionSensor::BeginPlay()
 // Called every frame
 void ACarCollisionSensor::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
 }
 

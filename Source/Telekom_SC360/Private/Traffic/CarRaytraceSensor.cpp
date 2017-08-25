@@ -69,12 +69,13 @@ void ACarRaytraceSensor::BeginPlay()
 	Super::BeginPlay();
 
 	halfAngle = viewAngle / 2;
-	deltaRotation = FRotator(0.0f, viewAngle / rayCount - 1, 0.0f);
-
+	deltaRotation = FRotator(0.0f, viewAngle / (rayCount - 1), 0.0f);
 }
 
 void ACarRaytraceSensor::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
+
 	overlappedCars.Reset();
 	emergencyCars.Reset();
 	otherOverlaps.Reset();
