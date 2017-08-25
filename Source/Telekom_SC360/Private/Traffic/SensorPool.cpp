@@ -39,6 +39,7 @@ void ASensorPool::AssignSensor(ATrafficCar * car, bool proxy)
 		else
 		{
 			newSensor = Cast<AProxySensor>(GetWorld()->SpawnActor(AProxySensor::StaticClass(), &FVector::ZeroVector, &FRotator::ZeroRotator));
+			newSensor->SetFolderPath("Traffic/Sensors");
 		}
 		newSensor->AssignCar(car);
 		assignedProxies.Add(newSensor);
@@ -53,6 +54,7 @@ void ASensorPool::AssignSensor(ATrafficCar * car, bool proxy)
 		else
 		{
 			newSensor = Cast<ACarSensorArray>(GetWorld()->SpawnActor(SensorArrayClass, &FVector::ZeroVector, &FRotator::ZeroRotator));
+			newSensor->SetFolderPath("Traffic/Sensors");
 		}
 		newSensor->AssignCar(car);
 		assignedSensors.Add(newSensor);

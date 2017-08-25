@@ -49,6 +49,7 @@ void ATrafficEmitter::SpawnCar()
 		if (FMath::FRand() < forcePathRatio)
 			randomCar->forcedPath.Append(forcedPath);
 		randomCar->emitter = this;
+		randomCar->SetFolderPath_Recursively("Traffic/Cars");
 	}
 	randomCar->Respawn(GetStartTransform());
 	sensorPool->AssignSensor(randomCar);
