@@ -170,7 +170,7 @@ bool ATrafficCar::TickPause(float DeltaT)
 void ATrafficCar::TickTrafficSlowdown(float & _targetSpeed, float DeltaT)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Traffic Slowdown"), STAT_CarTick_TrafficSlowdown, STATGROUP_TrafficSystem);
-	if (SensorArray->IsOverlapping())
+	if (SensorArray && SensorArray->IsOverlapping())
 	{
 		if (_targetSpeed * slowdownMultiplier > SensorArray->GetAvgSpeedOfOverlapCars())
 		{
@@ -186,7 +186,7 @@ void ATrafficCar::TickTrafficSlowdown(float & _targetSpeed, float DeltaT)
 void ATrafficCar::TickObstructed(float _targetSpeed, float DeltaT)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Obstructed"), STAT_CarTickObstructed, STATGROUP_TrafficSystem);
-	if (freePath)
+	if (!SensorArray || !SensorArray->IsEmergency())
 	{
 		forcedStopTime = 0;
 		speed = FMath::Lerp(speed, _targetSpeed, FMath::Clamp(DeltaT * accelerationLerpSpeed, 0.0f, 1.0f));
@@ -202,6 +202,8 @@ void ATrafficCar::TickObstructed(float _targetSpeed, float DeltaT)
 void ATrafficCar::TickSensorDirection(FTransform nextTransform, float DeltaT)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Car Tick Sensor Direction"), STAT_CarTick_SensorDirection, STATGROUP_TrafficSystem);
+	if (!SensorArray)
+		return;
 	DeltaYaw = (nextTransform.Rotator().Yaw - GetActorRotation().Yaw) / DeltaT;
 	if (FMath::Abs(DeltaYaw) > rearAngle)
 	{

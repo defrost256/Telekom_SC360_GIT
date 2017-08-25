@@ -4,6 +4,7 @@
 
 AProxySensor::AProxySensor()
 {
+	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 }
 
 bool AProxySensor::IsProxy()

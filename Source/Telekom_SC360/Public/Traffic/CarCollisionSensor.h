@@ -74,11 +74,13 @@ public:
 
 	virtual float GetAvgSpeedOfOverlapCars() override;
 	virtual void ChangeSensorDirection(ESensorDirection newDirection) override;
-	virtual void GetOverlappingCars(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter = nullptr) override;
 	virtual FString GetCurrentSensorDirectionName() override;
+	virtual void GetOverlappingCars(TSet<AActor*>& outActors, TSubclassOf<AActor> classFilter = nullptr, bool emergency = true) override;
 	virtual bool IsOverlapping() override;
+	virtual bool IsEmergency() override;
 	virtual void AssignCar(ATrafficCar* car) override;
 	virtual void RemoveCar() override;
+	//virtual void IsProxy() override;
 
 //--------------------- ACarSensorArray END
 

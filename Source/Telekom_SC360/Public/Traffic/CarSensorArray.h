@@ -37,9 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
 		virtual void ChangeSensorDirection(ESensorDirection newDirection);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
-		virtual void GetOverlappingCars(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter = nullptr);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
 		virtual FString GetCurrentSensorDirectionName();
+		virtual void GetOverlappingCars(TSet<AActor*>& outActors, TSubclassOf<AActor> classFilter = nullptr, bool emergency = true);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
 		virtual void AssignCar(ATrafficCar* car);
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
@@ -47,6 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
 		virtual bool IsOverlapping();
+	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
+		virtual bool IsEmergency();
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Sensor")
 		virtual bool IsProxy();
 

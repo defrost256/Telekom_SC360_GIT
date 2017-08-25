@@ -94,11 +94,11 @@ void ASensorPool::UpdateSensors()
 		FVector proxyLocation = currentProxy ? currentProxy->GetActorLocation() : FVector::ZeroVector;
 		for (FVector critLocation : criticalLocations)
 		{
-			if (currentSensor && FVector::Dist(sensorLocation, critLocation) > swapRadiusHighSq)
+			if (currentSensor && FVector::DistSquared(sensorLocation, critLocation) > swapRadiusHighSq)
 			{
 				removedSensors.Add(currentSensor);
 			}
-			if (currentProxy && FVector::Dist(proxyLocation, critLocation) < swapRadiusLowSq)
+			if (currentProxy && FVector::DistSquared(proxyLocation, critLocation) < swapRadiusLowSq)
 			{
 				removedProxies.Add(currentProxy);
 			}

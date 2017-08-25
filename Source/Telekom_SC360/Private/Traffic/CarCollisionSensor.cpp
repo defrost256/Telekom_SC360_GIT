@@ -10,6 +10,8 @@ ACarCollisionSensor::ACarCollisionSensor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
+
 	FrontSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Front Sensor"));
 	FrontRightSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Front Right Sensor"));
 	FrontLeftSensor = CreateDefaultSubobject<UBoxComponent>(TEXT("Front Left Sensor"));
@@ -137,9 +139,16 @@ void ACarCollisionSensor::ChangeSensorDirection(ESensorDirection newDirection)
 	overlapCount = 0;
 }
 
-void ACarCollisionSensor::GetOverlappingCars(TSet<AActor*>& actors, TSubclassOf<AActor> classFilter)
+void ACarCollisionSensor::GetOverlappingCars(TSet<AActor*>& outActors, TSubclassOf<AActor> classFilter, bool emergency)
 {
-	GetCurrentSensor()->GetOverlappingActors(actors, classFilter);
+	if (emergency)
+	{
+		GetCurrentSensor()->GetOverlappingActors(outActors, classFilter);
+	}
+	else
+	{
+		EmergencySensor->GetOverlappingActors(outActors, classFilter);
+	}
 }
 
 FString ACarCollisionSensor::GetCurrentSensorDirectionName()
