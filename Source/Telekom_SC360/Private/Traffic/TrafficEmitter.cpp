@@ -41,7 +41,7 @@ void ATrafficEmitter::SpawnCar()
 	if (HasReserves())
 	{
 		randomCar = carsReserve[FMath::RandRange(0, carsReserve.Num() - 1)];
-		carsReserve.Remove(randomCar);
+		carsReserve.RemoveSingleSwap(randomCar);
 	}
 	else
 	{
@@ -49,8 +49,10 @@ void ATrafficEmitter::SpawnCar()
 		if (FMath::FRand() < forcePathRatio)
 			randomCar->forcedPath.Append(forcedPath);
 		randomCar->emitter = this;
+		randomCar->SetFolderPath_Recursively("Traffic/Cars");
 	}
 	randomCar->Respawn(GetStartTransform());
+	sensorPool->AssignSensor(randomCar);
 	rootRoad->AddCar(randomCar);
 	carsActive.Add(randomCar);
 }
@@ -67,7 +69,8 @@ FTransform ATrafficEmitter::GetStartTransform()
 
 void ATrafficEmitter::CarFinished(ATrafficCar * car)
 {
-	carsActive.Remove(car);
+	carsActive.RemoveSingleSwap(car);
+	sensorPool->RevokeSensor(car);
 	car->Despawn();
 	carsReserve.Add(car);
 }

@@ -12,6 +12,7 @@
 
 #include "TrafficHelper.h"
 #include "TrafficRoad.h"
+#include "SensorPool.h"
 
 #include "TrafficEmitter.generated.h"
 
@@ -70,6 +71,8 @@ public:
 	/**The full route the cars following the include paths take*/
 	UPROPERTY(BlueprintReadOnly)
 		TArray<ATrafficRoad*> forcedPath;
+	UPROPERTY(BlueprintReadOnly)
+		ASensorPool* sensorPool;
 
 	/**Spawns a car from the emitter (if there is any car in the pool we respawn it)*/
 	UFUNCTION(BlueprintCallable, Category = "Traffic|Emitter")
