@@ -168,6 +168,7 @@ bool ATrafficRoad::CanLeaveRoad(float time, int carID)
 
 void ATrafficRoad::FTrafficTick(float DeltaT)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("Road Traffic Tick"), STAT_RoadTrafficTick, STATGROUP_TrafficSystem);
 	BeforeTrafficTick(DeltaT);
 	for (ATrafficCar* car : currentCars)
 	{
@@ -175,7 +176,7 @@ void ATrafficRoad::FTrafficTick(float DeltaT)
 	}
 	for (ATrafficCar* removeCar : removeList)
 	{
-		currentCars.Remove(removeCar);
+		currentCars.RemoveSingleSwap(removeCar);
 	}
 	removeList.Empty();
 	AfterTrafficTick(DeltaT);
@@ -183,7 +184,7 @@ void ATrafficRoad::FTrafficTick(float DeltaT)
 
 void ATrafficRoad::DetachCar(ATrafficCar * car)
 {
-	currentCars.Remove(car);
+	currentCars.RemoveSingleSwap(car);
 	//UE_LOG(TrafficLog, Log, TEXT("DETACH %s from %s"), *car->GetName(), *GetName());
 
 }

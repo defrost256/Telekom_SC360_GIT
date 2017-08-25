@@ -34,6 +34,7 @@ void ATrafficManager::BeginPlay()
 	for (ATrafficEmitter* e : emitters) {
 		//Add their root path to the graph
 		roads.Add(e->rootRoad);
+		e->sensorPool = sensorPool;
 	}
 	int i = 0;
 	//Do a DFS and add all the child roads to the graph (in order of the DFS)
@@ -75,5 +76,11 @@ void ATrafficManager::Tick(float DeltaTime)
 	{
 		road->FTrafficTick(DeltaTime);
 	}
+	sensorPoolUpdateTime += DeltaTime;
+	if (sensorPoolUpdateTime >= sensorPoolUpdateRate)
+	{
+		sensorPool->UpdateSensors();
+		sensorPoolUpdateTime -= sensorPoolUpdateRate;
+	}	
 }
 
