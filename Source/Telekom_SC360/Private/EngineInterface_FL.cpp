@@ -2,6 +2,10 @@
 
 #include "EngineInterface_FL.h"
 
+TSharedPtr<FMessageLog> UEngineInterface_FL::lastLog;
+TSharedPtr<FTokenizedMessage> UEngineInterface_FL::currentMessage;
+FName UEngineInterface_FL::lastLogName;
+
 void UEngineInterface_FL::DrawDebugArc(UObject * WorldContextObject, FVector Center, float Radius, float FillRatio, int32 NumSegments, FLinearColor LineColor, float LifeTime, float Thickness, FRotator Rotation, bool bDrawAxis)
 {
 	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
@@ -63,5 +67,59 @@ void UEngineInterface_FL::DrawDebugArc_Internal(UWorld * InWorld, FVector Center
 			}
 			LineBatcher->DrawLines(Lines);
 		}
+	}
+}
+
+void UEngineInterface_FL::CreateMessageLog(const FName & name)
+{
+	if (lastLogName.Compare(name) != 0)
+	{
+		lastLog = TSharedPtr<FMessageLog>(new FMessageLog(name));
+		lastLogName = name;
+	}
+	lastLog->NewPage(FText::AsCultureInvariant(name.ToString()));
+}
+
+void UEngineInterface_FL::ClearMessageLog()
+{
+}
+
+void UEngineInterface_FL::StartComposing(EMessageLogSeverity Severity, const FText & Message)
+{
+	if (lastLog.IsValid())
+	{
+		currentMessage = FTokenizedMessage::Create(EMessageSeverity::Type(Severity), Message);
+	}
+}
+
+void UEngineInterface_FL::FinishComposing()
+{
+	if (lastLog.IsValid() && currentMessage.IsValid())
+	{
+		lastLog->AddMessage(currentMessage.ToSharedRef());
+	}
+}
+
+void UEngineInterface_FL::ShowLog(EMessageLogSeverity Severity, bool bShowIfEmpty)
+{
+	if (lastLog.IsValid())
+	{
+		lastLog->Open(EMessageSeverity::Type(Severity), bShowIfEmpty);
+	}
+}
+
+void UEngineInterface_FL::AddUObjectToken(UObject * WorldContextObject, UObject * object, const FText & label)
+{
+	if (currentMessage.IsValid())
+	{
+		currentMessage->AddToken(FUObjectToken::Create(object, label));
+	}
+}
+
+void UEngineInterface_FL::AddTextToken(UObject * WorldContextObject, const FText & text)
+{
+	if (currentMessage.IsValid())
+	{
+		currentMessage->AddToken(FTextToken::Create(text));
 	}
 }
